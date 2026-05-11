@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { BOOKIES, ODDS, getAllOpps, fmt } from '../data/bookies.js'
+import { BOOKIES, ODDS, getAllOpps, fmt } from './data/bookies.js'
 
 // ── ONBOARDING SLIDES ──────────────────────────────────────
 const obBox = { background:'var(--gb)', border:'1px solid var(--gbr)', borderRadius:'var(--r)', padding:'13px 15px', textAlign:'left', fontSize:13, color:'var(--t1)', lineHeight:1.6 }
