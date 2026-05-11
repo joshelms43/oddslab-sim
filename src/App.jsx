@@ -946,7 +946,7 @@ function Withdrawal({ day, completedBookies, bookieState, onConfirm }) {
 // ── BOOKIE PANE ────────────────────────────────────────────
 function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onScreenshot, onOddsClick, betGame, betStep, refFn, isSportsbet, pendingHedgeDeposit, hasScreenshot }) {
   const sports = ['afl','nrl','nba','mlb']
-  const isScanning = scanningKey === bookieKey
+  const isScanning = false
   const games = ODDS[bookieKey]?.[sport] || []
 
   // Determine which team to highlight (if in bet flow)
