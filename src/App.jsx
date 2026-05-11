@@ -369,6 +369,16 @@ export default function App() {
     setBankroll(b => b - dep)
     setDepositModal(null)
     coachEvent('deposited', key)
+    // If betGame is already set and this deposit is for that bookie, resume bet flow
+    if (betGame && betGame.srcBookie === key && !isSB) {
+      setTimeout(() => {
+        coachSet([{
+          title: `Bet 1 of 3 — Your deposit bet`,
+          body: `Find <strong>${betGame.backTeam}</strong> (odds <strong>${betGame.backOdds.toFixed(2)}</strong>) on the board and tap it. This is a cash bet using your own deposit money.`,
+          waitFor: { type: 'oddsclick', team: betGame.backTeam },
+        }])
+      }, 100)
+    }
   }
 
   // ── SCREENSHOT ─────────────────────────────────────────
@@ -446,9 +456,17 @@ export default function App() {
     setBetStep(0)
     setBetSlipOpen(false)
     coachEvent('gotobets')
-    // Switch to bookie tab, wait for odds click
+    // Check if bookie is unlocked — if not, send to sign up first
+    if (!bookieState[game.srcBookie]?.unlocked) {
+      switchTab(game.srcBookie)
+      coachSet([{
+        title: `First, sign up to ${BOOKIES[game.srcBookie].name}`,
+        body: `Tap <strong>Sign up & claim offer →</strong> to deposit and get your bonus bet. Then we'll place the bets.`,
+        waitFor: { type: 'signup', key: game.srcBookie },
+      }])
+      return
+    }
     switchTab(game.srcBookie)
-    // Coach: find the odds
     coachSet([{
       title: `Bet 1 of 3 — Your deposit bet`,
       body: `Find <strong>${game.backTeam}</strong> (odds <strong>${game.backOdds.toFixed(2)}</strong>) on the board and tap it. This is a cash bet using your own deposit money — you get this back if ${game.backTeam} wins.`,
@@ -530,7 +548,23 @@ export default function App() {
       setScanned(prev => prev.filter(x => x.id !== g.id))
       setBetGame(null)
       setBetStep(0)
-      setProfitFlash({ profit: g.profit, backTeam: g.backTeam, backBookie: g.backBookie, hedgeTeam: g.hedgeTeam })
+      // Randomly pick which team "won" for the result moment
+      const backWon = Math.random() > 0.5
+      setProfitFlash({
+        profit: g.profit,
+        totalBack: g.totalBack,
+        backTeam: g.backTeam,
+        backBookie: g.backBookie,
+        hedgeTeam: g.hedgeTeam,
+        depStake: g.depStake,
+        bonusStake: g.bonusStake,
+        hedge: g.hedge,
+        backOdds: g.backOdds,
+        hedgeOdds: g.hedgeOdds,
+        winTeam: backWon ? g.backTeam : g.hedgeTeam,
+        winBookie: backWon ? g.backBookie : 'Sportsbet',
+        winReturn: backWon ? g.totalBack : g.hedge * g.hedgeOdds,
+      })
       coachSet([{
         title: 'All 3 bets placed! 🎉',
         body: 'Your profit is now <strong>locked in</strong>. It doesn\'t matter which team wins — one of your bets always pays out, and you come out ahead either way. Close this to continue.',
@@ -943,29 +977,37 @@ function BookieSelect({ day, sbUnlocked, sbSelectStep, picked, completedBookies,
 
 // ── WITHDRAWAL ─────────────────────────────────────────────
 function Withdrawal({ day, completedBookies, bookieState, onConfirm }) {
-  const total = completedBookies.reduce((s, k) => s + (bookieState[k].profit || 0), 0)
+  const totalProfit = completedBookies.reduce((s, k) => s + (bookieState[k].profit || 0), 0)
+  const totalDeposit = completedBookies.reduce((s, k) => s + (bookieState[k].deposit || 0), 0)
+  const totalWithdraw = totalProfit + totalDeposit
   return (
     <div style={styles.bsWrap}>
       <div style={{...styles.bsInner, maxWidth:440}}>
         <div style={styles.sLogo}>odds<em style={{fontStyle:'normal',color:'var(--g)'}}>lab</em></div>
         <div style={styles.dayPill}>Day {day}</div>
-        <div style={styles.bsH}>Time to withdraw your profit 💰</div>
-        <div style={styles.bsP}>Your bets have settled. The profit below is real money sitting in your bookie accounts — you can withdraw it straight to your bank. In this simulator, just tap the button to move on to Day {day + 1}.</div>
+        <div style={styles.bsH}>Withdraw your winnings 💰</div>
+        <div style={styles.bsP}>The game has settled. Here's what's sitting in your bookie account right now, ready to withdraw to your bank.</div>
         <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
           {completedBookies.map(k => (
             <div key={k} style={styles.wdAcc}>
               <div>
                 <div style={{fontSize:13,fontWeight:600}}>{BOOKIES[k].name}</div>
-                <div style={{fontSize:12,color:'var(--g)',fontFamily:'var(--mono)'}}>+{fmt(bookieState[k].profit||0)}</div>
+                <div style={{fontSize:11,color:'var(--t2)'}}>
+                  Deposit returned: <span style={{fontFamily:'var(--mono)',color:'white'}}>{fmt(bookieState[k].deposit||0)}</span>
+                  {' + '}profit: <span style={{fontFamily:'var(--mono)',color:'var(--g)'}}>+{fmt(bookieState[k].profit||0)}</span>
+                </div>
               </div>
-              <div style={{fontSize:11,color:'var(--t3)'}}>Ready</div>
+              <div style={{fontSize:14,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>{fmt((bookieState[k].deposit||0) + (bookieState[k].profit||0))}</div>
             </div>
           ))}
+        </div>
+        <div style={{background:'rgba(0,230,118,0.06)',border:'1px solid rgba(0,230,118,0.15)',borderRadius:8,padding:'12px 16px',marginBottom:16,fontSize:12,color:'var(--t2)',lineHeight:1.6}}>
+          Your <strong style={{color:'white'}}>{fmt(totalDeposit)}</strong> deposit comes back too — you never actually lose it. Your real gain is <strong style={{color:'var(--g)'}}>+{fmt(totalProfit)}</strong> in free profit on top.
         </div>
         <div style={styles.wdTotalBox}>
           <div>
             <div style={{fontSize:11,color:'var(--t2)',marginBottom:3}}>Total withdrawing</div>
-            <div style={{fontSize:22,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>{fmt(total)}</div>
+            <div style={{fontSize:22,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>{fmt(totalWithdraw)}</div>
           </div>
           <div style={{fontSize:28}}>🏦</div>
         </div>
@@ -1269,13 +1311,38 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose,
 }
 
 // ── PROFIT FLASH ───────────────────────────────────────────
-function ProfitFlash({ profit, backTeam, backBookie, hedgeTeam, bankroll, onClose }) {
+function ProfitFlash({ profit, totalBack, backTeam, backBookie, hedgeTeam, depStake, bonusStake, hedge, backOdds, hedgeOdds, winTeam, winBookie, winReturn, bankroll, onClose }) {
+  const loseTeam = winTeam === backTeam ? hedgeTeam : backTeam
+  // Show what would have happened if the other team won
+  const altReturn = winTeam === backTeam
+    ? (hedge * hedgeOdds).toFixed(2)
+    : totalBack?.toFixed(2) || '—'
+
   return (
     <div style={styles.pfOv}>
-      <div style={{fontSize:12,color:'var(--t2)',marginBottom:8}}>Locked in — no matter who wins</div>
-      <div style={{fontSize:58,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)',marginBottom:8,lineHeight:1}}>+{fmt(profit)}</div>
-      <div style={{fontSize:13,color:'var(--t2)',marginBottom:6}}>{backTeam} on {backBookie} · {hedgeTeam} on Sportsbet</div>
-      <div style={{fontSize:13,color:'var(--t2)',marginBottom:26}}>New bankroll: <strong style={{color:'var(--g)',fontFamily:'var(--mono)'}}>{fmt(bankroll)}</strong></div>
+      <div style={{fontSize:11,fontWeight:600,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:16}}>Game result</div>
+
+      {/* Team won moment */}
+      <div style={{background:'var(--gb)',border:'1px solid var(--gbr)',borderRadius:12,padding:'16px 20px',marginBottom:20,width:'100%',maxWidth:320,textAlign:'center'}}>
+        <div style={{fontSize:12,color:'var(--t2)',marginBottom:6}}>🏆 Winner</div>
+        <div style={{fontSize:22,fontWeight:800,marginBottom:4}}>{winTeam}</div>
+        <div style={{fontSize:12,color:'var(--t2)'}}>Your {winBookie} bet pays out</div>
+        <div style={{fontSize:28,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)',marginTop:6}}>{fmt(parseFloat(winReturn) || 0)}</div>
+      </div>
+
+      {/* Profit locked */}
+      <div style={{fontSize:13,color:'var(--t2)',marginBottom:4}}>Your guaranteed profit</div>
+      <div style={{fontSize:52,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)',marginBottom:4,lineHeight:1}}>+{fmt(profit)}</div>
+
+      {/* The key insight */}
+      <div style={{background:'rgba(0,230,118,0.06)',border:'1px solid rgba(0,230,118,0.15)',borderRadius:8,padding:'12px 16px',marginBottom:20,maxWidth:320,width:'100%',textAlign:'left'}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--g)',marginBottom:6}}>What if {loseTeam} had won instead?</div>
+        <div style={{fontSize:12,color:'var(--t2)',lineHeight:1.6}}>
+          Your other bet would have paid out <strong style={{color:'white'}}>{fmt(parseFloat(altReturn) || 0)}</strong> — and your profit would still be <strong style={{color:'var(--g)'}}>+{fmt(profit)}</strong>. The numbers are set up so it's always the same, no matter who wins.
+        </div>
+      </div>
+
+      <div style={{fontSize:12,color:'var(--t2)',marginBottom:20}}>Bankroll: <strong style={{color:'var(--g)',fontFamily:'var(--mono)'}}>{fmt(bankroll)}</strong></div>
       <button style={{...styles.btnGreen,padding:'12px 30px',width:'auto'}} onClick={onClose}>Keep going →</button>
     </div>
   )
