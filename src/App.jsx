@@ -181,6 +181,16 @@ function getDay1Coach(bookieKey) {
       waitFor: { type: 'tab', key: 'oddslab' },
     },
     {
+      title: 'Screenshot captured — now scan it',
+      body: 'Click the <strong>OddsLab tab</strong> above to switch over.',
+      waitFor: { type: 'tab', key: 'oddslab' },
+    },
+    {
+      title: 'Tap Scan to analyse the odds',
+      body: 'Tap <strong>Scan screenshots</strong>. OddsLab will read all the odds and find your best opportunity — no maths needed.',
+      waitFor: { type: 'scan', key: 'all' },
+    },
+    {
       title: 'Here\'s your best opportunity',
       body: 'The game with the green border gives you the most profit. OddsLab has already worked out exactly what to bet and where. Tap <strong>Go to bets</strong> to start — you\'ll place 3 bets total.',
       waitFor: { type: 'gotobets' },
@@ -217,8 +227,18 @@ function getDay2Coach(bookieKey) {
       waitFor: { type: 'tab', key: 'oddslab' },
     },
     {
+      title: 'Screenshot captured — now scan it',
+      body: 'Click the <strong>OddsLab tab</strong> above.',
+      waitFor: { type: 'tab', key: 'oddslab' },
+    },
+    {
+      title: 'Tap Scan to analyse the odds',
+      body: 'Tap <strong>Scan screenshots</strong> to find your best game.',
+      waitFor: { type: 'scan', key: 'all' },
+    },
+    {
       title: 'Place your 3 bets',
-      body: 'Tap <strong>Go to bets</strong> on the top result. OddsLab will walk you through each bet one at a time — bonus bet, deposit bet, then the Sportsbet safety net.',
+      body: 'Tap <strong>Go to bets</strong> on the top result. OddsLab will walk you through each bet one at a time — deposit bet, bonus bet, then the Sportsbet safety net.',
       waitFor: { type: 'gotobets' },
     },
   ]
@@ -383,17 +403,7 @@ export default function App() {
 
   // ── SCREENSHOT ─────────────────────────────────────────
   function takeScreenshot(key) {
-    // Block if scanned games still showing — must clear first
-    if (scanned.length > 0) {
-      coachSet([{
-        title: 'Clear your old games first',
-        body: 'Before scanning a new bookie, tap <strong>Clear all</strong> on the OddsLab tab to remove the previous results. Then come back and take your screenshot.',
-        waitFor: null,
-      }])
-      switchTab('oddslab')
-      return
-    }
-    // Block if a different bookie already screenshotted
+    // Block if a different bookie already screenshotted and not yet scanned
     const existing = Object.keys(screenshots)
     if (existing.length > 0 && !existing.includes(key)) {
       coachSet([{
@@ -534,7 +544,7 @@ export default function App() {
       const profit = g.profit
       setBookieState(s => ({
         ...s,
-        [g.srcBookie]: { ...s[g.srcBookie], bonus: 0, profit: s[g.srcBookie].profit + profit },
+        [g.srcBookie]: { ...s[g.srcBookie], bonus: 0, profit: s[g.srcBookie].profit + profit, totalBack: g.totalBack },
         sportsbet: { ...s.sportsbet, bal: s.sportsbet.bal - g.hedge },
       }))
       // totalBack is what you receive from the winning bet
@@ -621,12 +631,13 @@ export default function App() {
     setProfitFlash(null)
     const remaining = selectedBookies.filter(k => !completedBookies.includes(k))
     if (remaining.length > 0) {
-      // Send to OddsLab to clear before next bookie
-      switchTab('oddslab')
+      // Auto-clear scanned games and screenshots, then go straight to next bookie
+      clearScreenshots()
+      switchTab(remaining[0])
       coachSet([{
-        title: 'Nice work! Clear the results first',
-        body: `Before moving to ${BOOKIES[remaining[0]].name}, tap <strong>Clear all</strong> to remove the old games. Then head to the ${BOOKIES[remaining[0]].name} tab.`,
-        waitFor: null,
+        title: `On to ${BOOKIES[remaining[0]].name}`,
+        body: `Same process — click <strong>Sign up & claim offer</strong> on the ${BOOKIES[remaining[0]].name} tab, deposit, take your screenshot, then scan.`,
+        waitFor: { type: 'tab', key: remaining[0] },
       }])
     } else if (day < 3) {
       endDay()
@@ -762,17 +773,7 @@ export default function App() {
             screenshots={screenshots}
             onGoBets={startBets}
             onScanAll={scanAllScreenshots}
-            onClear={() => {
-              clearScreenshots()
-              const remaining = selectedBookies.filter(k => !completedBookies.includes(k))
-              if (remaining.length > 0) {
-                setTimeout(() => coachSet([{
-                  title: `Now go to ${BOOKIES[remaining[0]].name}`,
-                  body: `Games cleared. Click the <strong>${BOOKIES[remaining[0]].name} tab</strong> to sign up and claim their welcome bonus.`,
-                  waitFor: { type: 'tab', key: remaining[0] },
-                }]), 50)
-              }
-            }}
+            onClear={clearScreenshots}
             scanningAll={scanningKey === 'all'}
             refFn={ref}
           />
@@ -979,7 +980,7 @@ function BookieSelect({ day, sbUnlocked, sbSelectStep, picked, completedBookies,
 function Withdrawal({ day, completedBookies, bookieState, onConfirm }) {
   const totalProfit = completedBookies.reduce((s, k) => s + (bookieState[k].profit || 0), 0)
   const totalDeposit = completedBookies.reduce((s, k) => s + (bookieState[k].deposit || 0), 0)
-  const totalWithdraw = totalProfit + totalDeposit
+  const totalWithdraw = completedBookies.reduce((s, k) => s + (bookieState[k].totalBack || (bookieState[k].deposit + bookieState[k].profit) || 0), 0)
   return (
     <div style={styles.bsWrap}>
       <div style={{...styles.bsInner, maxWidth:440}}>
@@ -993,16 +994,15 @@ function Withdrawal({ day, completedBookies, bookieState, onConfirm }) {
               <div>
                 <div style={{fontSize:13,fontWeight:600}}>{BOOKIES[k].name}</div>
                 <div style={{fontSize:11,color:'var(--t2)'}}>
-                  Deposit returned: <span style={{fontFamily:'var(--mono)',color:'white'}}>{fmt(bookieState[k].deposit||0)}</span>
-                  {' + '}profit: <span style={{fontFamily:'var(--mono)',color:'var(--g)'}}>+{fmt(bookieState[k].profit||0)}</span>
+                  Profit: <span style={{fontFamily:'var(--mono)',color:'var(--g)'}}>+{fmt(bookieState[k].profit||0)}</span>
                 </div>
               </div>
-              <div style={{fontSize:14,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>{fmt((bookieState[k].deposit||0) + (bookieState[k].profit||0))}</div>
+              <div style={{fontSize:14,fontWeight:700,fontFamily:'var(--mono)',color:'white'}}>{fmt(bookieState[k].totalBack || 0)}</div>
             </div>
           ))}
         </div>
         <div style={{background:'rgba(0,230,118,0.06)',border:'1px solid rgba(0,230,118,0.15)',borderRadius:8,padding:'12px 16px',marginBottom:16,fontSize:12,color:'var(--t2)',lineHeight:1.6}}>
-          Your <strong style={{color:'white'}}>{fmt(totalDeposit)}</strong> deposit comes back too — you never actually lose it. Your real gain is <strong style={{color:'var(--g)'}}>+{fmt(totalProfit)}</strong> in free profit on top.
+          This is the <strong style={{color:'white'}}>full payout</strong> from the winning bet — your original deposit is inside that number. Your pure profit is <strong style={{color:'var(--g)'}}>+{fmt(totalProfit)}</strong>. It would have been the same amount no matter which team won.
         </div>
         <div style={styles.wdTotalBox}>
           <div>
