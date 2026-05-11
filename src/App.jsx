@@ -100,12 +100,12 @@ const OB_SLIDES = [
     icon: '🎁',
     title: <>Bookies are giving away <em style={{fontStyle:'normal',color:'var(--g)'}}>free money</em></>,
     body: <>Every Australian bookmaker has a welcome offer. Deposit a small amount and they hand you a <strong>bonus bet</strong> on top — free money just for joining. TAB, Ladbrokes, Neds, Betr — they all do it.</>,
-    extra: <div style={obBox}><p>For example: deposit <strong>$50</strong> with TAB and they give you a <strong>$100 bonus bet</strong>. You now have $150 to play with — but you only put in $50.</p></div>,
+    extra: <div style={obBox}><p>For example: deposit <strong>$50</strong> with TAB and they give you a <strong>$100 bonus bet</strong>. Your account balance shows <strong>$150</strong> — but you only put in $50.</p></div>,
   },
   {
     icon: '⚠️',
     title: <>The catch — you <em style={{fontStyle:'normal',color:'var(--g)'}}>can't just withdraw it</em></>,
-    body: <>Here's the problem. Bookmakers aren't silly — they don't let you pocket the bonus bet directly. There are two rules that make it tricky:</>,
+    body: <>Bookmakers aren't silly — they don't let you pocket the bonus bet directly. There are two rules that make it tricky:</>,
     extra: <>
       <div style={obBox}><p><strong>Rule 1:</strong> You can't withdraw a bonus bet. You have to <strong>place it as a real bet first</strong> before any money can leave the account.</p></div>
       <div style={{...obBox, marginTop: 8}}><p><strong>Rule 2:</strong> If your bonus bet wins, you only get the <strong>profit</strong> — not the original stake back. So a $100 bonus bet at odds of 3.00 returns $200, not $300.</p></div>
@@ -113,11 +113,11 @@ const OB_SLIDES = [
   },
   {
     icon: '🤔',
-    title: <>So what's the <em style={{fontStyle:'normal',color:'var(--g)'}}>problem?</em></>,
-    body: <>If you just place the bonus bet on a team and hope they win, you might lose. And if you lose, the bonus is gone — you get nothing.</>,
+    title: <>The problem — <em style={{fontStyle:'normal',color:'var(--g)'}}>betting blind</em></>,
+    body: <>If you just place the bonus bet on a random team without a strategy, you're gambling. You could easily lose the whole thing and walk away with nothing.</>,
     extra: <div style={obBox}>
-      <p style={{marginBottom:10}}>You deposit $50 → get a $100 bonus bet → bet it on Carlton → Carlton loses → <strong>you walk away with $0 profit</strong>.</p>
-      <p>The bookie got you to deposit $50 and kept the lot. That's what they're counting on.</p>
+      <p style={{marginBottom:10}}>You deposit $50 → get a $100 bonus bet → bet it on Carlton → <strong>Carlton loses → your $100 bonus is gone</strong>. You've lost $50 of your own money with nothing to show for it.</p>
+      <p>The bookie got you to deposit $50 and kept it. That's exactly what they're counting on.</p>
     </div>,
   },
   {
@@ -125,15 +125,15 @@ const OB_SLIDES = [
     title: <>The solution — <em style={{fontStyle:'normal',color:'var(--g)'}}>bet both sides</em></>,
     body: <>Here's how you guarantee the money. Place the bonus bet on one team, then use your <strong>own cash at Sportsbet</strong> to bet on the other team. One of them always wins.</>,
     extra: <div style={obBox}>
-      <p style={{marginBottom:10}}>No matter who wins the game, <strong>one of your bets always pays out</strong>. The bonus money is converted to real money — guaranteed.</p>
-      <p>This is called <strong>matched betting</strong>. It's completely legal and thousands of Australians do it every week.</p>
+      <p style={{marginBottom:10}}>No matter who wins the game, <strong>one of your bets always pays out</strong>. The bonus money is converted to real, withdrawable cash — guaranteed.</p>
+      <p>This is called <strong>matched betting</strong>. It's completely legal and bookmakers can't stop you from doing it.</p>
     </div>,
   },
   {
     icon: '🧮',
-    title: <>The maths is the <em style={{fontStyle:'normal',color:'var(--g)'}}>hard bit</em></>,
-    body: <>The tricky part is knowing which game to use, and exactly how much to bet on each side so the profit is locked in regardless of the result.</>,
-    extra: <div style={obBox}><p>OddsLab handles all of that. Take a screenshot of any bookie's odds board, and the tool finds the best game and tells you <strong>exactly what to bet and where</strong> — down to the dollar.</p></div>,
+    title: <>OddsLab does the <em style={{fontStyle:'normal',color:'var(--g)'}}>hard part</em></>,
+    body: <>The tricky part is knowing which game to use, and exactly how much to bet on each side so the profit is locked in. Get the maths wrong and you won't be fully covered.</>,
+    extra: <div style={obBox}><p>OddsLab handles all of that. Take a screenshot of any bookie's odds board and the tool finds the best game and tells you <strong>exactly what to bet and where — down to the cent</strong>. No maths needed.</p></div>,
   },
 ]
 
@@ -245,7 +245,7 @@ export default function App() {
   const [depositModal, setDepositModal] = useState(null) // { key, amount }
   const [scanningKey, setScanningKey] = useState(null)
   const [betGame, setBetGame] = useState(null)
-  const [betStep, setBetStep] = useState(0) // 0=bonus,1=deposit,2=hedge
+  const [betStep, setBetStep] = useState(0) // 0=deposit,1=bonus,2=hedge
   const [betSlipOpen, setBetSlipOpen] = useState(false)
   const [stakeInput, setStakeInput] = useState('')
   const [profitFlash, setProfitFlash] = useState(null)
@@ -396,8 +396,8 @@ export default function App() {
     switchTab(game.srcBookie)
     // Coach: find the odds
     coachSet([{
-      title: `Bet 1 of 3 — Your bonus bet`,
-      body: `Find <strong>${game.backTeam}</strong> (odds <strong>${game.backOdds.toFixed(2)}</strong>) on the board and tap it. This is your <em>bonus bet</em> — it costs you nothing extra, it\'s the free money ${game.backBookie} gave you.`,
+      title: `Bet 1 of 3 — Your deposit bet`,
+      body: `Find <strong>${game.backTeam}</strong> (odds <strong>${game.backOdds.toFixed(2)}</strong>) on the board and tap it. This is a cash bet using your own deposit money — you get this back if ${game.backTeam} wins.`,
       waitFor: { type: 'oddsclick', team: game.backTeam },
     }])
   }
@@ -411,10 +411,13 @@ export default function App() {
     // Open bet slip
     setBetSlipOpen(true)
     setStakeInput('')
-    const correctStake = step === 0 ? g.bonusStake : step === 1 ? g.depStake : g.hedge
+    const correctStake = step === 0 ? g.depStake : step === 1 ? g.bonusStake : g.hedge
+    const stakeBody = step === 1
+      ? `The <strong>Bonus Bet switch</strong> is already on — that's your free money activated. Type <strong>${correctStake.toFixed(2)}</strong> in the stake field (OddsLab calculated this), then tap <strong>Confirm bet →</strong>.`
+      : `Type <strong>${correctStake.toFixed(2)}</strong> in the stake field — OddsLab has already worked this out for you. Then tap <strong>Confirm bet →</strong>.`
     coachSet([{
-      title: `Enter the stake amount`,
-      body: `Type <strong>${correctStake.toFixed(2)}</strong> in the stake field — OddsLab has already worked this out for you. Then tap <strong>Confirm bet →</strong>.`,
+      title: step === 1 ? `Activate your bonus bet` : `Enter the stake amount`,
+      body: stakeBody,
       waitFor: null,
     }])
   }
@@ -432,7 +435,7 @@ export default function App() {
         const hedgeAmt = g.hedge
         coachSet([{
           title: 'Almost there — one more step',
-          body: `Bet 1 is placed. Now you need to top up your Sportsbet account with <strong>${fmt(hedgeAmt)}</strong> so you can place the safety net bet. Click the <strong>Sportsbet tab</strong>.`,
+          body: `Both bets at ${g.backBookie} are placed. Now top up your Sportsbet account with <strong>${fmt(hedgeAmt)}</strong> so you can place the safety net bet. Click the <strong>Sportsbet tab</strong>.`,
           waitFor: { type: 'tab', key: 'sportsbet' },
         }])
         // After tab switch, open deposit modal
@@ -447,10 +450,10 @@ export default function App() {
         // Store pending hedge deposit
         setPendingHedgeDeposit(hedgeAmt)
       } else {
-        // Bet 2: deposit bet, stay on bookie
+        // Bet 2: bonus bet, stay on bookie
         coachSet([{
-          title: `Bet 2 of 3 — Your cash bet`,
-          body: `Find <strong>${g.backTeam}</strong> (odds <strong>${g.backOdds.toFixed(2)}</strong>) again and tap it. This time you\'re betting your own deposit money — this is what you get back if ${g.backTeam} wins.`,
+          title: `Bet 2 of 3 — Your bonus bet`,
+          body: `Find <strong>${g.backTeam}</strong> (odds <strong>${g.backOdds.toFixed(2)}</strong>) again — but this time flip the <strong>Bonus Bet switch</strong> on the bet slip. This uses the free money the bookie gave you, not your own cash.`,
           waitFor: { type: 'oddsclick', team: g.backTeam },
         }])
       }
@@ -554,8 +557,10 @@ export default function App() {
   }
 
   function confirmWD() {
-    const dayProfit = completedBookies.reduce((sum, k) => sum + (bookieState[k].profit || 0), 0)
-    setBankroll(b => b + dayProfit)
+    // Return the deposits from completed bookies' accounts (profit was already added at bet completion)
+    const depositsToReturn = completedBookies.reduce((sum, k) => sum + (bookieState[k].deposit || 0), 0)
+    // Also return the Sportsbet hedge deposit (minus what was used for the hedge bet, which is already netted in profit)
+    setBankroll(b => b + depositsToReturn)
     setScanned([])
     setCompletedBookies([])
     setSelectedBookies([])
@@ -956,8 +961,9 @@ function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onSc
           <div style={{fontSize:34,marginBottom:12,opacity:.35}}>🛡️</div>
           <div style={styles.lockedH}>Top up your Sportsbet account</div>
           <div style={{...styles.lockedP, maxWidth:300}}>
-            Here's why you need to deposit here: the bonus bet from {bookieKey === 'sportsbet' ? 'your bookie' : 'the other bookie'} can't be withdrawn directly — that's the catch with all bonus bets. You <strong>have to place it as a bet first</strong>.<br/><br/>
-            So we place the bonus bet on one team, then use <strong>your own money here at Sportsbet</strong> to bet on the other team. One of them always wins — and together, you come out ahead.
+            Here's why you need to deposit here: the bonus bet from your bookie can't be withdrawn directly — you have to <strong>place it as a bet first</strong>.<br/><br/>
+            So we place the bonus bet on one team, then use <strong>your own money here at Sportsbet</strong> to bet on the other team. One of them always wins — and together, you come out ahead.<br/><br/>
+            <span style={{color:'var(--g)',fontWeight:600}}>OddsLab has calculated exactly how much you need — no maths required.</span>
           </div>
           <button
             id={`signup-sportsbet`}
@@ -1062,17 +1068,21 @@ function OddsLabPanel({ scanned, onGoBets, refFn }) {
 
 // ── BET SLIP ───────────────────────────────────────────────
 function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose }) {
-  const tags = [`Bet 1 of 3 — ${g.backBookie} (bonus bet)`, `Bet 2 of 3 — ${g.backBookie} (deposit)`, `Bet 3 of 3 — Sportsbet (hedge)`]
+  const tags = [
+    `Bet 1 of 3 — ${g.backBookie} (your deposit)`,
+    `Bet 2 of 3 — ${g.backBookie} (bonus bet)`,
+    `Bet 3 of 3 — Sportsbet (safety net)`,
+  ]
   const subs = [
-    `Your bonus bet on ${g.backTeam}. If you win, only the profit is paid — your stake is not returned.`,
-    `Place your locked deposit on the same team. This turns it over so you can withdraw later.`,
-    `Your safety net bet on ${g.hedgeTeam}. This guarantees you get paid no matter who wins.`,
+    `A regular cash bet on ${g.backTeam} using your own deposit money. If ${g.backTeam} wins, you get your stake back plus profit.`,
+    `This time it's your bonus bet — the free money ${g.backBookie} gave you. The toggle below switches it on. If you win, only the profit is paid out (not the bonus stake itself).`,
+    `Your safety net bet on ${g.hedgeTeam} at Sportsbet. If ${g.hedgeTeam} wins, this pays out. Either way — you're covered.`,
   ]
   const team = step < 2 ? g.backTeam : g.hedgeTeam
   const odds = step < 2 ? g.backOdds : g.hedgeOdds
-  const isBonus = step === 0
+  const isBonus = step === 1
   const stake = parseFloat(stakeInput) || 0
-  const ret = isBonus ? stake*(odds-1) : stake*odds
+  const ret = isBonus ? stake * (odds - 1) : stake * odds
 
   return (
     <div style={styles.slipOv}>
@@ -1089,6 +1099,19 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose 
             </div>
           ))}
         </div>
+
+        {isBonus && (
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'var(--gb)',border:'1px solid var(--gbr)',borderRadius:'var(--rs)',padding:'10px 13px',marginBottom:11}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,marginBottom:1}}>Use Bonus Bet</div>
+              <div style={{fontSize:11,color:'var(--t2)'}}>Free money from {g.backBookie} — tap to activate</div>
+            </div>
+            <div style={{width:42,height:24,background:'var(--g)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'flex-end',padding:'0 3px',cursor:'default'}}>
+              <div style={{width:18,height:18,background:'#0A0D0F',borderRadius:'50%'}} />
+            </div>
+          </div>
+        )}
+
         <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:11}}>
           <div style={{fontSize:12,color:'var(--t2)',whiteSpace:'nowrap'}}>Stake ($)</div>
           <input
@@ -1101,12 +1124,12 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose 
           />
         </div>
         <div style={styles.retBox}>
-          <div style={{fontSize:12,color:'var(--t2)'}}>{isBonus ? 'Profit if wins (stake not returned)' : 'Return if wins'}</div>
+          <div style={{fontSize:12,color:'var(--t2)'}}>{isBonus ? 'Profit if wins (bonus stake not returned)' : 'Return if wins'}</div>
           <div style={{fontSize:15,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>{fmt(ret)}</div>
         </div>
         <button
           style={{...styles.btnGreen,width:'100%',padding:12,fontSize:13,opacity:stake>0?1:0.4}}
-          onClick={confirmBet => { if (stake > 0) onConfirm() }}
+          onClick={() => { if (stake > 0) onConfirm() }}
           disabled={stake <= 0}
         >
           Confirm bet →
@@ -1114,8 +1137,6 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose 
       </div>
     </div>
   )
-
-  function confirmBet() { if (stake > 0) onConfirm() }
 }
 
 // ── PROFIT FLASH ───────────────────────────────────────────
