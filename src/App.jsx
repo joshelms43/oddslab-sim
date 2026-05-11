@@ -172,7 +172,7 @@ function getDay1Coach(bookieKey) {
     },
     {
       title: 'Have a look at the odds',
-      body: 'These are the games you can bet on. You don\'t need to pick one yourself — OddsLab will find the best one for you. When you\'re ready, tap <strong>Take Screenshot</strong> at the bottom, then go to the OddsLab tab to scan.',
+      body: 'These are the games you can bet on. You don\'t need to pick one yourself — OddsLab will find the best one for you. When you\'re ready, tap <strong>Screenshot all sports</strong> at the bottom, then go to OddsLab to scan.',
       waitFor: { type: 'scan', key: bookieKey },
     },
     {
@@ -208,7 +208,7 @@ function getDay2Coach(bookieKey) {
     },
     {
       title: 'Scan the odds board',
-      body: 'Have a look at the games. When you\'re ready, tap <strong>Take Screenshot</strong> at the bottom, then head to OddsLab to scan all your screenshots at once.',
+      body: 'Have a look at the games. When you\'re ready, tap <strong>Screenshot all sports</strong> at the bottom, then head to OddsLab to scan all your screenshots at once.',
       waitFor: { type: 'scan', key: bookieKey },
     },
     {
@@ -373,6 +373,27 @@ export default function App() {
 
   // ── SCREENSHOT ─────────────────────────────────────────
   function takeScreenshot(key) {
+    // Block if scanned games still showing — must clear first
+    if (scanned.length > 0) {
+      coachSet([{
+        title: 'Clear your old games first',
+        body: 'Before scanning a new bookie, tap <strong>Clear all</strong> on the OddsLab tab to remove the previous results. Then come back and take your screenshot.',
+        waitFor: null,
+      }])
+      switchTab('oddslab')
+      return
+    }
+    // Block if a different bookie already screenshotted
+    const existing = Object.keys(screenshots)
+    if (existing.length > 0 && !existing.includes(key)) {
+      coachSet([{
+        title: 'One bookie at a time',
+        body: 'You already have a screenshot ready to scan. Head to the <strong>OddsLab tab</strong> and scan it first before taking a new one.',
+        waitFor: null,
+      }])
+      switchTab('oddslab')
+      return
+    }
     setScreenshots(s => ({ ...s, [key]: true }))
     coachEvent('scan', key)
   }
@@ -564,11 +585,12 @@ export default function App() {
     setProfitFlash(null)
     const remaining = selectedBookies.filter(k => !completedBookies.includes(k))
     if (remaining.length > 0) {
-      switchTab(remaining[0])
+      // Send to OddsLab to clear before next bookie
+      switchTab('oddslab')
       coachSet([{
-        title: `Great work! On to ${BOOKIES[remaining[0]].name}`,
-        body: `You\'ve done this before — same process. Click the <strong>${BOOKIES[remaining[0]].name} tab</strong> to sign up and claim their welcome bonus.`,
-        waitFor: { type: 'tab', key: remaining[0] },
+        title: 'Nice work! Clear the results first',
+        body: `Before moving to ${BOOKIES[remaining[0]].name}, tap <strong>Clear all</strong> to remove the old games. Then head to the ${BOOKIES[remaining[0]].name} tab.`,
+        waitFor: null,
       }])
     } else if (day < 3) {
       endDay()
@@ -705,7 +727,17 @@ export default function App() {
             screenshots={screenshots}
             onGoBets={startBets}
             onScanAll={scanAllScreenshots}
-            onClear={clearScreenshots}
+            onClear={() => {
+              clearScreenshots()
+              const remaining = selectedBookies.filter(k => !completedBookies.includes(k))
+              if (remaining.length > 0) {
+                setTimeout(() => coachSet([{
+                  title: `Now go to ${BOOKIES[remaining[0]].name}`,
+                  body: `Games cleared. Click the <strong>${BOOKIES[remaining[0]].name} tab</strong> to sign up and claim their welcome bonus.`,
+                  waitFor: { type: 'tab', key: remaining[0] },
+                }]), 50)
+              }
+            }}
             scanningAll={scanningKey === 'all'}
             refFn={ref}
           />
@@ -1056,7 +1088,7 @@ function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onSc
               ) : (
                 <>
                   <p style={{fontSize:12,color:'var(--t2)'}}>Capture the odds board for OddsLab to analyse</p>
-                  <button style={styles.btnScan} onClick={onScreenshot}>📸 Take Screenshot</button>
+                  <button style={styles.btnScan} onClick={onScreenshot}>📸 Screenshot all sports</button>
                 </>
               )}
             </div>
@@ -1070,12 +1102,13 @@ function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onSc
 // ── ODDSLAB PANEL ──────────────────────────────────────────
 function OddsLabPanel({ scanned, screenshots, onGoBets, onScanAll, onClear, scanningAll, refFn }) {
   const screenshotCount = Object.keys(screenshots).length
+  const totalSports = screenshotCount * 4
   return (
     <div style={{padding:'16px 18px'}}>
       {screenshotCount > 0 && scanned.length === 0 && (
         <div style={{background:'var(--gb)',border:'1px solid var(--gbr)',borderRadius:'var(--r)',padding:'14px 16px',marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>
-            {screenshotCount} screenshot{screenshotCount > 1 ? 's' : ''} ready to scan
+            {screenshotCount} bookie{screenshotCount > 1 ? 's' : ''} screenshotted — {totalSports} sport screens ready
           </div>
           <div style={{fontSize:12,color:'var(--t2)',marginBottom:12}}>OddsLab will read all of them and find your best opportunity across every bookie.</div>
           {scanningAll ? (
@@ -1088,7 +1121,7 @@ function OddsLabPanel({ scanned, screenshots, onGoBets, onScanAll, onClear, scan
                 style={{...styles.btnGreen,padding:'9px 16px',fontSize:12,flex:1}}
                 onClick={onScanAll}
               >
-                📸 Scan {screenshotCount} screenshot{screenshotCount > 1 ? 's' : ''}
+                📸 Scan {totalSports} screenshots
               </button>
               <button
                 style={{background:'var(--s2)',border:'1px solid var(--b2)',color:'var(--t2)',borderRadius:'var(--r)',padding:'9px 14px',fontSize:12,cursor:'pointer'}}
@@ -1143,7 +1176,7 @@ function OddsLabPanel({ scanned, screenshots, onGoBets, onScanAll, onClear, scan
 
 // ── BET SLIP ───────────────────────────────────────────────
 function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose, bonusBalance }) {
-  const [bonusToggled, setBonusToggled] = React.useState(false)
+  const [bonusToggled, setBonusToggled] = useState(false)
   const tags = [
     `Bet 1 of 3 — ${g.backBookie} (your deposit)`,
     `Bet 2 of 3 — ${g.backBookie} (bonus bet)`,
