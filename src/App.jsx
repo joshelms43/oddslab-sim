@@ -850,7 +850,7 @@ export default function App() {
         step={currentCoachStep}
         idx={coach.idx}
         total={coach.steps.length}
-        hidden={coach.hidden}
+        hidden={coach.hidden || betSlipOpen}
         onHide={() => setCoach(c => ({...c, hidden:true}))}
         onShow={() => setCoach(c => ({...c, hidden:false}))}
         onManualNext={() => setCoach(c => ({...c, idx: Math.min(c.idx+1, c.steps.length-1)}))}
