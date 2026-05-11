@@ -1377,30 +1377,24 @@ function DayWake({ day, profit, onContinue }) {
 }
 
 // ── END SCREEN ─────────────────────────────────────────────
-function EndScreen({ totalProfit, completedBookies, bookieState }) {
+function EndScreen({ totalProfit }) {
   return (
     <div style={{...styles.pfOv,justifyContent:'center',gap:0}}>
       <div style={{fontSize:20,fontWeight:800,marginBottom:22}}>odds<em style={{fontStyle:'normal',color:'var(--g)'}}>lab</em></div>
       <div style={{fontSize:26,fontWeight:800,lineHeight:1.2,marginBottom:8,textAlign:'center'}}>3 days. Zero risk.<br/>Real money.</div>
       <div style={{fontSize:56,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)',margin:'12px 0'}}>+{fmt(totalProfit)}</div>
-      <div style={{fontSize:13,color:'var(--t2)',maxWidth:400,lineHeight:1.7,marginBottom:22,textAlign:'center'}}>Every dollar was guaranteed before the game started. The real tool makes this just as easy — and there are dozens more bookies waiting.</div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:9,width:'100%',maxWidth:400,marginBottom:24}}>
-        {completedBookies.map(k => (
-          <div key={k} style={{background:'var(--s1)',border:'1px solid var(--b1)',borderRadius:'var(--r)',padding:13,textAlign:'center'}}>
-            <div style={{fontSize:10,color:'var(--t2)',marginBottom:3}}>{BOOKIES[k].name}</div>
-            <div style={{fontSize:16,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>+{fmt(bookieState[k].profit||0)}</div>
-          </div>
-        ))}
-      </div>
-      <button style={{...styles.btnGreen,padding:'13px 32px',width:'100%',maxWidth:400,fontSize:14}} onClick={() => window.open('https://oddslab-theta.vercel.app','_blank')}>
-        Do this for real → $49/month
+      <div style={{fontSize:13,color:'var(--t2)',maxWidth:360,lineHeight:1.7,marginBottom:28,textAlign:'center'}}>Every dollar was guaranteed before the game started. The real tool makes this just as easy — and there are dozens more bookies waiting.</div>
+      <div style={{fontSize:14,fontWeight:600,maxWidth:360,lineHeight:1.8,marginBottom:28,textAlign:'center',color:'var(--t1)'}}>You did this using real odds, real offers, and real techniques.<br/>Why not do it for real?</div>
+      <button style={{...styles.btnGreen,padding:'15px 32px',width:'100%',maxWidth:400,fontSize:15,fontWeight:700,marginBottom:10}} onClick={() => window.open('https://oddslab-theta.vercel.app','_blank')}>
+        Try OddsLab free for 3 days →
       </button>
-      <div style={{fontSize:11,color:'var(--t3)',maxWidth:380,lineHeight:1.6,marginTop:12,textAlign:'center'}}>
+      <div style={{fontSize:11,color:'var(--t3)',maxWidth:380,lineHeight:1.6,marginTop:10,textAlign:'center'}}>
         Simulated using realistic Australian betting market odds. Matched betting involves financial risk. Please gamble responsibly.
       </div>
     </div>
   )
 }
+
 
 // ── COACH ──────────────────────────────────────────────────
 function Coach({ step, idx, total, hidden, onHide, onShow, onManualNext }) {
