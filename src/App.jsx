@@ -93,35 +93,47 @@ const OB_SLIDES = [
   {
     icon: '👋',
     title: <>Welcome to <em style={{fontStyle:'normal',color:'var(--g)'}}>OddsLab</em></>,
-    body: <>This simulator teaches you a completely legal way to make <strong>guaranteed money</strong> from online bookmakers — even if you've never placed a bet in your life.</>,
+    body: <>This simulator walks you through a completely legal way to make <strong>guaranteed money</strong> from online bookmakers — even if you've never placed a bet in your life.</>,
     extra: <div style={bankCard}><div style={{fontSize:10,color:'var(--t2)',textTransform:'uppercase',letterSpacing:.6,marginBottom:4}}>Your bankroll to get started</div><div style={{fontSize:36,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>$1,000.00</div></div>,
   },
   {
     icon: '🎁',
-    title: <>Bookies pay you to <em style={{fontStyle:'normal',color:'var(--g)'}}>sign up</em></>,
-    body: <>Every online bookmaker has a welcome offer. Deposit some money and they match it with a <strong>bonus bet</strong> — free money just for joining.</>,
-    extra: <div style={obBox}><p>For example: deposit <strong>$50</strong> with TAB and they give you a <strong>$100 bonus bet</strong>. That's $150 to play with, but you only put in $50.</p></div>,
+    title: <>Bookies are giving away <em style={{fontStyle:'normal',color:'var(--g)'}}>free money</em></>,
+    body: <>Every Australian bookmaker has a welcome offer. Deposit a small amount and they hand you a <strong>bonus bet</strong> on top — free money just for joining. TAB, Ladbrokes, Neds, Betr — they all do it.</>,
+    extra: <div style={obBox}><p>For example: deposit <strong>$50</strong> with TAB and they give you a <strong>$100 bonus bet</strong>. You now have $150 to play with — but you only put in $50.</p></div>,
   },
   {
     icon: '⚠️',
-    title: <>The catch with <em style={{fontStyle:'normal',color:'var(--g)'}}>bonus bets</em></>,
-    body: <>Bonus bets come with two important rules:</>,
+    title: <>The catch — you <em style={{fontStyle:'normal',color:'var(--g)'}}>can't just withdraw it</em></>,
+    body: <>Here's the problem. Bookmakers aren't silly — they don't let you pocket the bonus bet directly. There are two rules that make it tricky:</>,
     extra: <>
-      <div style={obBox}><p><strong>Rule 1:</strong> You can't withdraw a bonus bet. You must place it as a bet first before any money can leave the account.</p></div>
-      <div style={{...obBox, marginTop: 8}}><p><strong>Rule 2:</strong> If your bonus bet wins, you only receive the <strong>profit</strong> — not your original stake back. So the bigger the odds, the bigger the profit.</p></div>
+      <div style={obBox}><p><strong>Rule 1:</strong> You can't withdraw a bonus bet. You have to <strong>place it as a real bet first</strong> before any money can leave the account.</p></div>
+      <div style={{...obBox, marginTop: 8}}><p><strong>Rule 2:</strong> If your bonus bet wins, you only get the <strong>profit</strong> — not the original stake back. So a $100 bonus bet at odds of 3.00 returns $200, not $300.</p></div>
     </>,
   },
   {
-    icon: '🛡️',
-    title: <>Your <em style={{fontStyle:'normal',color:'var(--g)'}}>safety net</em> account</>,
-    body: <>Here's the clever part. When you place your bonus bet on one team, you also place a cash bet on the <strong>other team</strong> at Sportsbet.</>,
-    extra: <div style={obBox}><p>One of those bets always wins. So no matter what happens, <strong>you always get paid</strong>. The risk is removed completely.</p></div>,
+    icon: '🤔',
+    title: <>So what's the <em style={{fontStyle:'normal',color:'var(--g)'}}>problem?</em></>,
+    body: <>If you just place the bonus bet on a team and hope they win, you might lose. And if you lose, the bonus is gone — you get nothing.</>,
+    extra: <div style={obBox}>
+      <p style={{marginBottom:10}}>You deposit $50 → get a $100 bonus bet → bet it on Carlton → Carlton loses → <strong>you walk away with $0 profit</strong>.</p>
+      <p>The bookie got you to deposit $50 and kept the lot. That's what they're counting on.</p>
+    </div>,
   },
   {
-    icon: '📸',
-    title: <>OddsLab does the <em style={{fontStyle:'normal',color:'var(--g)'}}>hard part</em></>,
-    body: <>The tricky bit is knowing which game to use your bonus on, and how much to bet on each side. OddsLab works it all out for you.</>,
-    extra: <div style={obBox}><p>Screenshot the odds board from any bookie app. The tool reads it, finds the best game, and tells you <strong>exactly what to bet and where</strong>.</p></div>,
+    icon: '💡',
+    title: <>The solution — <em style={{fontStyle:'normal',color:'var(--g)'}}>bet both sides</em></>,
+    body: <>Here's how you guarantee the money. Place the bonus bet on one team, then use your <strong>own cash at Sportsbet</strong> to bet on the other team. One of them always wins.</>,
+    extra: <div style={obBox}>
+      <p style={{marginBottom:10}}>No matter who wins the game, <strong>one of your bets always pays out</strong>. The bonus money is converted to real money — guaranteed.</p>
+      <p>This is called <strong>matched betting</strong>. It's completely legal and thousands of Australians do it every week.</p>
+    </div>,
+  },
+  {
+    icon: '🧮',
+    title: <>The maths is the <em style={{fontStyle:'normal',color:'var(--g)'}}>hard bit</em></>,
+    body: <>The tricky part is knowing which game to use, and exactly how much to bet on each side so the profit is locked in regardless of the result.</>,
+    extra: <div style={obBox}><p>OddsLab handles all of that. Take a screenshot of any bookie's odds board, and the tool finds the best game and tells you <strong>exactly what to bet and where</strong> — down to the dollar.</p></div>,
   },
 ]
 
@@ -218,11 +230,12 @@ export default function App() {
   const [phase, setPhase] = useState('onboarding')
   const [obSlide, setObSlide] = useState(0)
   const [day, setDay] = useState(1)
-  const [bankroll, setBankroll] = useState(0)
+  const [bankroll, setBankroll] = useState(1000)
   const [totalProfit, setTotalProfit] = useState(0)
   const [bookieState, setBookieState] = useState(initBookieState)
   const [selectedBookies, setSelectedBookies] = useState([]) // keys chosen for today
   const [completedBookies, setCompletedBookies] = useState([])
+  const [allTimeCompletedBookies, setAllTimeCompletedBookies] = useState([])
   const [activeTab, setActiveTab] = useState('oddslab')
   const [activeSport, setActiveSport] = useState({ tab:'afl', ladbrokes:'afl', neds:'afl', betr:'afl', sportsbet:'afl' })
   const [scanned, setScanned] = useState([])
@@ -453,6 +466,7 @@ export default function App() {
       setTotalProfit(p => p + profit)
       if (!completedBookies.includes(g.srcBookie)) {
         setCompletedBookies(prev => [...prev, g.srcBookie])
+        setAllTimeCompletedBookies(prev => prev.includes(g.srcBookie) ? prev : [...prev, g.srcBookie])
       }
       setScanned(prev => prev.filter(x => x.id !== g.id))
       setBetGame(null)
@@ -540,6 +554,8 @@ export default function App() {
   }
 
   function confirmWD() {
+    const dayProfit = completedBookies.reduce((sum, k) => sum + (bookieState[k].profit || 0), 0)
+    setBankroll(b => b + dayProfit)
     setScanned([])
     setCompletedBookies([])
     setSelectedBookies([])
@@ -582,7 +598,7 @@ export default function App() {
       sbUnlocked={bookieState.sportsbet.unlocked}
       sbSelectStep={sbSelectStep}
       picked={bsPickedBookies}
-      completedBookies={completedBookies}
+      completedBookies={allTimeCompletedBookies}
       maxPick={day === 3 ? 2 : 1}
       onToggle={toggleBsPick}
       onConfirm={confirmBS}
@@ -802,13 +818,16 @@ function BookieSelect({ day, sbUnlocked, sbSelectStep, picked, completedBookies,
     : picked.length === maxPick
 
   const heading = showOnlySB ? 'First, set up Sportsbet'
-    : day === 3 ? 'Choose two bookies today'
+    : day === 3 ? 'Day 3 — choose two bookies'
+    : day === 2 ? 'Day 2 — pick your next bookie'
     : 'Choose your first bonus bookie'
 
   const subtext = showOnlySB
     ? 'Sportsbet is your safety net account. Sign up for free — no deposit needed yet.'
     : day === 3
-    ? 'Pick two bookies you haven\'t signed up to yet. You\'ll do them one at a time.'
+    ? 'Pick two bookies you haven\'t used yet. You\'ll do them one at a time — same process as before.'
+    : day === 2
+    ? 'Great work yesterday. Pick a new bookie — same process, new bonus.'
     : 'Each bookie has a welcome offer — free money just for signing up. Pick one to start.'
 
   return (
