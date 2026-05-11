@@ -8,7 +8,7 @@ const bankCard = { background:'var(--s1)', border:'1px solid var(--gbr)', border
 // ── STYLES ─────────────────────────────────────────────────
 const styles = {
   appWrap: { display:'flex', flexDirection:'column', minHeight:'100vh', background:'var(--bg)' },
-  statusBar: { background:'var(--s1)', borderBottom:'1px solid var(--b1)', padding:'10px 18px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 },
+  statusBar: { background:'var(--s1)', borderBottom:'1px solid var(--b1)', padding:'8px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 },
   sLogo: { fontSize:15, fontWeight:700 },
   sRight: { display:'flex', alignItems:'center', gap:14 },
   sPill: { fontSize:10, fontWeight:600, padding:'3px 8px', borderRadius:12, background:'var(--gb)', color:'var(--g)', border:'1px solid var(--gbr)' },
@@ -55,15 +55,15 @@ const styles = {
   stakeInp: { flex:1, background:'var(--s2)', border:'1px solid var(--b2)', borderRadius:'var(--rs)', color:'var(--t1)', fontSize:16, padding:'8px 11px', outline:'none' },
   retBox: { background:'var(--gb)', border:'1px solid var(--gbr)', borderRadius:'var(--rs)', padding:'9px 13px', marginBottom:11, display:'flex', justifyContent:'space-between', alignItems:'center' },
   pfOv: { position:'fixed', inset:0, background:'rgba(0,0,0,0.93)', zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', textAlign:'center', padding:24, gap:0 },
-  coachWrap: { position:'fixed', bottom:18, right:18, zIndex:600, display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 },
-  coachPopup: { background:'var(--s1)', border:'1px solid var(--gbr)', borderRadius:12, padding:'14px 15px', width:265, boxShadow:'0 14px 40px rgba(0,0,0,0.5)' },
-  coachBtn: { width:42, height:42, background:'var(--g)', color:'#0A0D0F', borderRadius:'50%', fontSize:17, cursor:'pointer', boxShadow:'0 4px 14px rgba(0,230,118,0.4)', display:'flex', alignItems:'center', justifyContent:'center', border:'none' },
-  obWrap: { display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', padding:'32px 20px', textAlign:'center', background:'radial-gradient(ellipse at 50% 0%,rgba(0,230,118,0.07) 0%,transparent 60%)' },
-  obLogo: { fontSize:22, fontWeight:800, marginBottom:28 },
-  obSlide: { width:'100%', maxWidth:500, marginBottom:20 },
-  obIcon: { fontSize:44, marginBottom:16 },
-  obH: { fontSize:24, fontWeight:800, lineHeight:1.2, marginBottom:10, letterSpacing:-.3 },
-  obP: { fontSize:14, color:'var(--t2)', lineHeight:1.75, marginBottom:16, textAlign:'left' },
+  coachWrap: { position:'fixed', bottom:0, left:0, right:0, zIndex:600, display:'flex', flexDirection:'column', alignItems:'stretch', padding:'0 0 env(safe-area-inset-bottom)' },
+  coachPopup: { background:'var(--s1)', borderTop:'2px solid var(--g)', padding:'16px 18px 20px', boxShadow:'0 -8px 40px rgba(0,0,0,0.6)' },
+  coachBtn: { position:'fixed', bottom:18, right:18, width:44, height:44, background:'var(--g)', color:'#0A0D0F', borderRadius:'50%', fontSize:18, cursor:'pointer', boxShadow:'0 4px 14px rgba(0,230,118,0.4)', display:'flex', alignItems:'center', justifyContent:'center', border:'none', zIndex:600 },
+  obWrap: { display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', padding:'24px 18px', textAlign:'center', background:'radial-gradient(ellipse at 50% 0%,rgba(0,230,118,0.07) 0%,transparent 60%)' },
+  obLogo: { fontSize:20, fontWeight:800, marginBottom:24 },
+  obSlide: { width:'100%', maxWidth:480, marginBottom:16 },
+  obIcon: { fontSize:38, marginBottom:12 },
+  obH: { fontSize:21, fontWeight:800, lineHeight:1.2, marginBottom:10, letterSpacing:-.3 },
+  obP: { fontSize:13, color:'var(--t2)', lineHeight:1.7, marginBottom:14, textAlign:'left' },
   obBox: { background:'var(--gb)', border:'1px solid var(--gbr)', borderRadius:'var(--r)', padding:'13px 15px', textAlign:'left', fontSize:13, color:'var(--t1)', lineHeight:1.6 },
   obNav: { display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', maxWidth:500, gap:12 },
   obDot: { width:7, height:7, borderRadius:'50%', background:'var(--s3)', transition:'background .2s' },
@@ -91,49 +91,22 @@ const styles = {
 
 const OB_SLIDES = [
   {
-    icon: '👋',
-    title: <>Welcome to <em style={{fontStyle:'normal',color:'var(--g)'}}>OddsLab</em></>,
-    body: <>This simulator walks you through a completely legal way to make <strong>guaranteed money</strong> from online bookmakers — even if you've never placed a bet in your life.</>,
-    extra: <div style={bankCard}><div style={{fontSize:10,color:'var(--t2)',textTransform:'uppercase',letterSpacing:.6,marginBottom:4}}>Your bankroll to get started</div><div style={{fontSize:36,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>$1,000.00</div></div>,
-  },
-  {
     icon: '🎁',
-    title: <>Bookies are giving away <em style={{fontStyle:'normal',color:'var(--g)'}}>free money</em></>,
-    body: <>Every Australian bookmaker has a welcome offer. Deposit a small amount and they hand you a <strong>bonus bet</strong> on top — free money just for joining. TAB, Ladbrokes, Neds, Betr — they all do it.</>,
-    extra: <div style={obBox}><p>For example: deposit <strong>$50</strong> with TAB and they give you a <strong>$100 bonus bet</strong>. Your account balance shows <strong>$150</strong> — but you only put in $50.</p></div>,
-  },
-  {
-    icon: '⚠️',
-    title: <>The catch — you <em style={{fontStyle:'normal',color:'var(--g)'}}>can't just withdraw it</em></>,
-    body: <>Bookmakers aren't silly — they don't let you pocket the bonus bet directly. There are two rules that make it tricky:</>,
-    extra: <>
-      <div style={obBox}><p><strong>Rule 1:</strong> You can't withdraw a bonus bet. You have to <strong>place it as a real bet first</strong> before any money can leave the account.</p></div>
-      <div style={{...obBox, marginTop: 8}}><p><strong>Rule 2:</strong> If your bonus bet wins, you only get the <strong>profit</strong> — not the original stake back. So a $100 bonus bet at odds of 3.00 returns $200, not $300.</p></div>
-    </>,
-  },
-  {
-    icon: '🤔',
-    title: <>The problem — <em style={{fontStyle:'normal',color:'var(--g)'}}>betting blind</em></>,
-    body: <>If you just place the bonus bet on a random team without a strategy, you're gambling. You could easily lose the whole thing and walk away with nothing.</>,
-    extra: <div style={obBox}>
-      <p style={{marginBottom:10}}>You deposit $50 → get a $100 bonus bet → bet it on Carlton → <strong>Carlton loses → your $100 bonus is gone</strong>. You've lost $50 of your own money with nothing to show for it.</p>
-      <p>The bookie got you to deposit $50 and kept it. That's exactly what they're counting on.</p>
-    </div>,
+    title: <>Bookies are handing out <em style={{fontStyle:'normal',color:'var(--g)'}}>free money</em></>,
+    body: <>Every Australian bookmaker gives you a <strong>bonus bet</strong> just for signing up. Deposit $50, they hand you $100 free. Sounds great — but there's a catch.</>,
+    extra: <div style={obBox}><p>You <strong>can't withdraw the bonus directly</strong>. You have to place it as a bet first. And if you just pick a team and hope for the best, you could lose the lot.</p></div>,
   },
   {
     icon: '💡',
-    title: <>The solution — <em style={{fontStyle:'normal',color:'var(--g)'}}>bet both sides</em></>,
-    body: <>Here's how you guarantee the money. Place the bonus bet on one team, then use your <strong>own cash at Sportsbet</strong> to bet on the other team. One of them always wins.</>,
-    extra: <div style={obBox}>
-      <p style={{marginBottom:10}}>No matter who wins the game, <strong>one of your bets always pays out</strong>. The bonus money is converted to real, withdrawable cash — guaranteed.</p>
-      <p>This is called <strong>matched betting</strong>. It's completely legal and bookmakers can't stop you from doing it.</p>
-    </div>,
+    title: <>The trick — <em style={{fontStyle:'normal',color:'var(--g)'}}>bet both sides</em></>,
+    body: <>Place the bonus bet on one team, then use your own cash at Sportsbet to bet on the other team. <strong>One of them always wins.</strong> The bonus money becomes real, withdrawable cash — guaranteed.</>,
+    extra: <div style={obBox}><p>OddsLab figures out <strong>exactly which game to use</strong> and how much to bet on each side. You just follow the steps. No maths, no guesswork.</p></div>,
   },
   {
-    icon: '🧮',
-    title: <>OddsLab does the <em style={{fontStyle:'normal',color:'var(--g)'}}>hard part</em></>,
-    body: <>The tricky part is knowing which game to use, and exactly how much to bet on each side so the profit is locked in. Get the maths wrong and you won't be fully covered.</>,
-    extra: <div style={obBox}><p>OddsLab handles all of that. Take a screenshot of any bookie's odds board and the tool finds the best game and tells you <strong>exactly what to bet and where — down to the cent</strong>. No maths needed.</p></div>,
+    icon: '🚀',
+    title: <>Let's do this <em style={{fontStyle:'normal',color:'var(--g)'}}>in a simulation</em></>,
+    body: <>You'll go through a real matched betting trade from start to finish — picking a bookie, scanning the odds, placing 3 bets, and locking in your profit.</>,
+    extra: <div style={bankCard}><div style={{fontSize:10,color:'var(--t2)',textTransform:'uppercase',letterSpacing:.6,marginBottom:4}}>Your starting bankroll</div><div style={{fontSize:36,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>$1,000.00</div></div>,
   },
 ]
 
@@ -248,6 +221,8 @@ function getDay2Coach(bookieKey) {
 export default function App() {
   // Phase: 'onboarding' | 'bookieSelect' | 'app' | 'withdrawal' | 'end'
   const [phase, setPhase] = useState('onboarding')
+  const [betStartTime, setBetStartTime] = useState(null)
+  const [elapsedSecs, setElapsedSecs] = useState(0)
   const [obSlide, setObSlide] = useState(0)
   const [day, setDay] = useState(1)
   const [bankroll, setBankroll] = useState(1000)
@@ -457,7 +432,15 @@ export default function App() {
   }
 
   // ── BET FLOW ───────────────────────────────────────────
+  // ── TIMER ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!betStartTime) return
+    const iv = setInterval(() => setElapsedSecs(Math.floor((Date.now() - betStartTime) / 1000)), 1000)
+    return () => clearInterval(iv)
+  }, [betStartTime])
+
   function startBets(gameId) {
+    if (!betStartTime) setBetStartTime(Date.now())
     const game = scanned.find(g => g.id === gameId)
     if (!game) return
     setBetGame(game)
@@ -627,21 +610,7 @@ export default function App() {
   // ── PROFIT FLASH CLOSE ─────────────────────────────────
   function closePF() {
     setProfitFlash(null)
-    const remaining = selectedBookies.filter(k => !completedBookies.includes(k))
-    if (remaining.length > 0) {
-      // Auto-clear scanned games and screenshots, then go straight to next bookie
-      clearScreenshots()
-      switchTab(remaining[0])
-      coachSet([{
-        title: `On to ${BOOKIES[remaining[0]].name}`,
-        body: `Same process — click <strong>Sign up & claim offer</strong> on the ${BOOKIES[remaining[0]].name} tab, deposit, take your screenshot, then scan.`,
-        waitFor: { type: 'tab', key: remaining[0] },
-      }])
-    } else if (day < 3) {
-      endDay()
-    } else {
-      setPhase('end')
-    }
+    setPhase('end')
   }
 
   // ── DAY END ────────────────────────────────────────────
@@ -728,8 +697,7 @@ export default function App() {
   if (phase === 'end') return (
     <EndScreen
       totalProfit={totalProfit}
-      completedBookies={completedBookies}
-      bookieState={bookieState}
+      elapsedSecs={elapsedSecs}
     />
   )
 
@@ -743,9 +711,8 @@ export default function App() {
       <div style={styles.statusBar}>
         <div style={styles.sLogo}>odds<em style={{fontStyle:'normal',color:'var(--g)'}}>lab</em></div>
         <div style={styles.sRight}>
-          <span style={styles.sPill}>Day {day}</span>
-          <span style={{fontSize:12}}>Profit: <span style={{fontFamily:'var(--mono)',color:'var(--g)',fontWeight:600}}>{totalProfit >= 0 ? '+' : ''}{fmt(totalProfit)}</span></span>
-          <span style={{fontSize:12}}>Bankroll: <span style={{fontFamily:'var(--mono)',color:'var(--g)',fontWeight:600}}>{fmt(bankroll)}</span></span>
+          <span style={{fontSize:11,color:'var(--t2)'}}>Profit: <span style={{fontFamily:'var(--mono)',color:'var(--g)',fontWeight:700}}>{totalProfit >= 0 ? '+' : ''}{fmt(totalProfit)}</span></span>
+          <span style={{fontSize:11,color:'var(--t2)'}}>Bankroll: <span style={{fontFamily:'var(--mono)',color:'var(--g)',fontWeight:700}}>{fmt(bankroll)}</span></span>
         </div>
       </div>
 
@@ -772,7 +739,7 @@ export default function App() {
       </div>
 
       {/* TAB CONTENT */}
-      <div style={{flex:1}}>
+      <div style={{flex:1, paddingBottom: 140}}>
         {activeTab === 'oddslab' && (
           <OddsLabPanel
             scanned={scanned}
@@ -917,7 +884,7 @@ function Onboarding({ slide, onNext, onSkip }) {
           ))}
         </div>
         <button style={styles.obNxt} onClick={onNext}>
-          {slide === OB_SLIDES.length-1 ? 'Start →' : 'Next →'}
+          {slide === OB_SLIDES.length-1 ? "Let's go →" : 'Next →'}
         </button>
       </div>
     </div>
@@ -1377,18 +1344,28 @@ function DayWake({ day, profit, onContinue }) {
 }
 
 // ── END SCREEN ─────────────────────────────────────────────
-function EndScreen({ totalProfit }) {
+function EndScreen({ totalProfit, elapsedSecs }) {
+  const mins = Math.floor(elapsedSecs / 60)
+  const secs = elapsedSecs % 60
+  const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs} seconds`
   return (
-    <div style={{...styles.pfOv,justifyContent:'center',gap:0}}>
-      <div style={{fontSize:20,fontWeight:800,marginBottom:22}}>odds<em style={{fontStyle:'normal',color:'var(--g)'}}>lab</em></div>
-      <div style={{fontSize:26,fontWeight:800,lineHeight:1.2,marginBottom:8,textAlign:'center'}}>3 days. Zero risk.<br/>Real money.</div>
-      <div style={{fontSize:56,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)',margin:'12px 0'}}>+{fmt(totalProfit)}</div>
-      <div style={{fontSize:13,color:'var(--t2)',maxWidth:360,lineHeight:1.7,marginBottom:28,textAlign:'center'}}>Every dollar was guaranteed before the game started. The real tool makes this just as easy — and there are dozens more bookies waiting.</div>
-      <div style={{fontSize:14,fontWeight:600,maxWidth:360,lineHeight:1.8,marginBottom:28,textAlign:'center',color:'var(--t1)'}}>You did this using real odds, real offers, and real techniques.<br/>Why not do it for real?</div>
-      <button style={{...styles.btnGreen,padding:'15px 32px',width:'100%',maxWidth:400,fontSize:15,fontWeight:700,marginBottom:10}} onClick={() => window.open('https://oddslab-theta.vercel.app','_blank')}>
+    <div style={{...styles.pfOv, justifyContent:'center', gap:0, overflowY:'auto', alignItems:'center'}}>
+      <div style={{fontSize:20,fontWeight:800,marginBottom:16}}>odds<em style={{fontStyle:'normal',color:'var(--g)'}}>lab</em></div>
+      <div style={{fontSize:11,fontWeight:600,color:'var(--t2)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>You just made</div>
+      <div style={{fontSize:62,fontWeight:800,fontFamily:'var(--mono)',color:'var(--g)',lineHeight:1,marginBottom:8}}>+{fmt(totalProfit)}</div>
+      {elapsedSecs > 0 && (
+        <div style={{fontSize:13,color:'var(--t2)',marginBottom:24}}>in <strong style={{color:'white'}}>{timeStr}</strong></div>
+      )}
+      <div style={{fontSize:14,fontWeight:600,maxWidth:320,lineHeight:1.8,marginBottom:28,textAlign:'center',color:'var(--t1)'}}>
+        You did this using real odds, real offers, and real techniques.<br/>Why not do it for real?
+      </div>
+      <button
+        style={{...styles.btnGreen,padding:'16px 32px',width:'100%',maxWidth:380,fontSize:16,fontWeight:700,marginBottom:12,borderRadius:14}}
+        onClick={() => window.open('https://oddslab-theta.vercel.app','_blank')}
+      >
         Try OddsLab free for 3 days →
       </button>
-      <div style={{fontSize:11,color:'var(--t3)',maxWidth:380,lineHeight:1.6,marginTop:10,textAlign:'center'}}>
+      <div style={{fontSize:11,color:'var(--t3)',maxWidth:340,lineHeight:1.6,marginTop:8,textAlign:'center'}}>
         Simulated using realistic Australian betting market odds. Matched betting involves financial risk. Please gamble responsibly.
       </div>
     </div>
@@ -1398,36 +1375,34 @@ function EndScreen({ totalProfit }) {
 
 // ── COACH ──────────────────────────────────────────────────
 function Coach({ step, idx, total, hidden, onHide, onShow, onManualNext }) {
-  const atBottom = !step?.waitFor || step.waitFor.type !== 'scan'
-  const wrapStyle = atBottom
-    ? styles.coachWrap
-    : { ...styles.coachWrap, bottom: 'unset', top: 18 }
+  const isTopMode = step?.waitFor?.type === 'scan' && step?.waitFor?.key !== 'all'
+  const wrapStyle = isTopMode
+    ? { ...styles.coachWrap, bottom:'unset', top:0, borderTop:'none', borderBottom:'2px solid var(--g)', boxShadow:'0 8px 40px rgba(0,0,0,0.6)' }
+    : styles.coachWrap
 
-  if (!step) return (
-    <div style={wrapStyle}>
-      <button style={styles.coachBtn} onClick={onShow}>💡</button>
-    </div>
-  )
+  if (!step || hidden) return <button style={styles.coachBtn} onClick={onShow}>💡</button>
+
   return (
     <div style={wrapStyle}>
-      {!hidden && (
-        <div style={styles.coachPopup}>
-          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:7}}>
-            <div style={{fontSize:13,fontWeight:700}}>{step.title}</div>
-            <button style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',fontSize:15,lineHeight:1,padding:'0 0 0 6px'}} onClick={onHide}>✕</button>
-          </div>
-          <div style={{display:'flex',gap:3,marginBottom:8}}>
-            {Array.from({length:total}).map((_,i) => (
-              <div key={i} style={{width:5,height:5,borderRadius:'50%',background:i<idx?'rgba(0,230,118,0.4)':i===idx?'var(--g)':'var(--s3)',boxShadow:i===idx?'0 0 4px var(--g)':undefined}} />
-            ))}
-          </div>
-          <div style={{fontSize:12,color:'var(--t2)',lineHeight:1.6,marginBottom:10}} dangerouslySetInnerHTML={{__html:step.body}} />
-          {!step.waitFor && (
-            <button style={{...styles.btnGreen,padding:'7px 0',fontSize:12}} onClick={onManualNext}>OK →</button>
-          )}
-        </div>
+      {!isTopMode && step?.waitFor && (
+        <div style={{textAlign:'center',fontSize:24,lineHeight:1,marginBottom:2,animation:'bounce 1s infinite'}}>↑</div>
       )}
-      <button style={styles.coachBtn} onClick={hidden ? onShow : onHide}>💡</button>
+      <div style={styles.coachPopup}>
+        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:6}}>
+          <div style={{fontSize:14,fontWeight:700,flex:1,paddingRight:8,lineHeight:1.3}}>{step.title}</div>
+          <button style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',fontSize:16,lineHeight:1,flexShrink:0}} onClick={onHide}>✕</button>
+        </div>
+        <div style={{display:'flex',gap:3,marginBottom:10}}>
+          {Array.from({length:total}).map((_,i) => (
+            <div key={i} style={{height:3,flex:1,borderRadius:2,background:i<idx?'rgba(0,230,118,0.5)':i===idx?'var(--g)':'var(--s3)',transition:'background .3s'}} />
+          ))}
+        </div>
+        <div style={{fontSize:13,color:'var(--t2)',lineHeight:1.65,marginBottom:step.waitFor?0:12}} dangerouslySetInnerHTML={{__html:step.body}} />
+        {!step.waitFor && (
+          <button style={{...styles.btnGreen,padding:'10px 0',fontSize:13,marginTop:12}} onClick={onManualNext}>Got it →</button>
+        )}
+      </div>
+      <style>{`@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}`}</style>
     </div>
   )
 }
