@@ -202,8 +202,8 @@ function getDay2Coach(bookieKey) {
   const name = BOOKIES[bookieKey]?.name || ''
   return [
     {
-      title: `Day 2 — welcome back`,
-      body: `Same idea as yesterday, new bookie. Sportsbet is still your safety net — it stays open in the background. Click the <strong>${name} tab</strong> to get started.`,
+      title: `Day ${bookieKey === 'neds' || bookieKey === 'betr' ? '3' : '2'} — OddsLab is cleared`,
+      body: `Fresh start. Head to the <strong>${name} tab</strong> to sign up and claim their bonus offer.`,
       waitFor: { type: 'tab', key: bookieKey },
     },
     {
@@ -342,10 +342,8 @@ export default function App() {
     setPhase('app')
     setActiveTab('oddslab')
     // Init coach after short delay so tabs render
-    // Use sportsbet.unlocked as reliable signal that day 1 is done
-    const isDay1 = !bookieState.sportsbet.unlocked || day === 1
     setTimeout(() => {
-      if (isDay1) {
+      if (day === 1) {
         coachSet(getDay1Coach(bsPickedBookies[0]))
       } else {
         coachSet(getDay2Coach(bsPickedBookies[0]))
@@ -659,15 +657,23 @@ export default function App() {
   }
 
   function confirmWD() {
-    // Sportsbet bal is whatever wasn't used as hedge stake — return it
+    // Return any remaining Sportsbet balance
     const sbBalance = bookieState.sportsbet.bal || 0
     setBankroll(b => b + sbBalance)
-    setCompletedBookies([])
-    setSelectedBookies([])
+    // Clear all game/bet state for the new day
+    setScanned([])
+    setScreenshots({})
     setBetGame(null)
     setBetStep(0)
     setBetSlipOpen(false)
     setPendingHedgeDeposit(null)
+    setCompletedBookies([])
+    setSelectedBookies([])
+    // Reset sportsbet balance for new day (keep unlocked)
+    setBookieState(s => ({
+      ...s,
+      sportsbet: { ...s.sportsbet, bal: 0 },
+    }))
     setPhase('bookieSelect')
     setBsPickedBookies([])
   }
