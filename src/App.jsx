@@ -519,7 +519,9 @@ export default function App() {
         [g.srcBookie]: { ...s[g.srcBookie], bonus: 0, profit: s[g.srcBookie].profit + profit },
         sportsbet: { ...s.sportsbet, bal: s.sportsbet.bal - g.hedge },
       }))
-      setBankroll(b => b + profit)
+      // totalBack is what you receive from the winning bet
+      // bankroll already had -dep and -hedge subtracted, so add totalBack back
+      setBankroll(b => b + g.totalBack)
       setTotalProfit(p => p + profit)
       if (!completedBookies.includes(g.srcBookie)) {
         setCompletedBookies(prev => [...prev, g.srcBookie])
@@ -612,10 +614,9 @@ export default function App() {
   }
 
   function confirmWD() {
-    // Return bookie deposits + remaining Sportsbet balance (hedge deposit minus hedge stake already spent)
-    const bookieDeposits = completedBookies.reduce((sum, k) => sum + (bookieState[k].deposit || 0), 0)
+    // Sportsbet bal is whatever wasn't used as hedge stake — return it
     const sbBalance = bookieState.sportsbet.bal || 0
-    setBankroll(b => b + bookieDeposits + sbBalance)
+    setBankroll(b => b + sbBalance)
     setCompletedBookies([])
     setSelectedBookies([])
     setBetGame(null)
@@ -822,6 +823,7 @@ export default function App() {
           onConfirm={confirmBet}
           onClose={() => setBetSlipOpen(false)}
           bonusBalance={betGame ? bookieState[betGame.srcBookie]?.bonus : 0}
+          correctStake={betGame ? (betStep === 0 ? betGame.depStake : betStep === 1 ? betGame.bonusStake : betGame.hedge) : 0}
         />
       )}
 
@@ -1175,7 +1177,7 @@ function OddsLabPanel({ scanned, screenshots, onGoBets, onScanAll, onClear, scan
 }
 
 // ── BET SLIP ───────────────────────────────────────────────
-function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose, bonusBalance }) {
+function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose, bonusBalance, correctStake }) {
   const [bonusToggled, setBonusToggled] = useState(false)
   const tags = [
     `Bet 1 of 3 — ${g.backBookie} (your deposit)`,
@@ -1192,7 +1194,16 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose,
   const isBonus = step === 1
   const stake = parseFloat(stakeInput) || 0
   const ret = isBonus ? stake * (odds - 1) : stake * odds
-  const canConfirm = stake > 0 && (!isBonus || bonusToggled)
+
+  // Validation
+  const stakeCorrect = stake > 0 && Math.abs(stake - correctStake) < 0.1
+  const toggleCorrect = isBonus ? bonusToggled : !bonusToggled
+  const canConfirm = stakeCorrect && toggleCorrect
+
+  let errorMsg = null
+  if (stake > 0 && !stakeCorrect) errorMsg = `OddsLab calculated $${correctStake.toFixed(2)} — please enter that exact amount.`
+  else if (isBonus && !bonusToggled) errorMsg = 'Tap the Bonus Bet switch above to activate your free money.'
+  else if (!isBonus && bonusToggled) errorMsg = 'Turn off the Bonus Bet switch — this is a regular cash bet.'
 
   return (
     <div style={styles.slipOv}>
@@ -1210,8 +1221,9 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose,
           ))}
         </div>
 
+        {step !== 2 && (
         <div
-          style={{display:'flex',alignItems:'center',justifyContent:'space-between',background: bonusToggled ? 'var(--gb)' : 'var(--s2)',border:`1px solid ${bonusToggled ? 'var(--gbr)' : 'var(--b2)'}`,borderRadius:'var(--rs)',padding:'10px 13px',marginBottom:11,cursor:'pointer',transition:'all .2s'}}
+          style={{display:'flex',alignItems:'center',justifyContent:'space-between',background: bonusToggled ? 'var(--gb)' : 'var(--s2)',border:`1px solid ${bonusToggled ? 'var(--gbr)' : 'var(--b2)'}`,borderRadius:'var(--rs)',padding:'10px 13px',marginBottom:11,cursor: isBonus ? 'pointer' : 'default',transition:'all .2s',opacity: isBonus ? 1 : 0.4}}
           onClick={() => isBonus && setBonusToggled(t => !t)}
         >
           <div>
@@ -1222,13 +1234,14 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose,
             <div style={{width:18,height:18,background:'#0A0D0F',borderRadius:'50%'}} />
           </div>
         </div>
+        )}
 
         <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:11}}>
           <div style={{fontSize:12,color:'var(--t2)',whiteSpace:'nowrap'}}>Stake ($)</div>
           <input
-            style={styles.stakeInp}
+            style={{...styles.stakeInp, ...(stake > 0 && !stakeCorrect ? {borderColor:'#ff4444'} : stakeCorrect ? {borderColor:'var(--g)'} : {})}}
             type="number"
-            placeholder="Type amount here"
+            placeholder={`Enter $${correctStake.toFixed(2)}`}
             value={stakeInput}
             onChange={e => onStakeChange(e.target.value)}
             autoFocus
@@ -1238,8 +1251,10 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose,
           <div style={{fontSize:12,color:'var(--t2)'}}>{isBonus ? 'Profit if wins (bonus stake not returned)' : 'Return if wins'}</div>
           <div style={{fontSize:15,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>{fmt(ret)}</div>
         </div>
-        {isBonus && !bonusToggled && (
-          <div style={{fontSize:11,color:'var(--t3)',textAlign:'center',marginBottom:8}}>Toggle the Bonus Bet switch above to continue</div>
+        {errorMsg && (
+          <div style={{fontSize:11,color:'#ff8800',textAlign:'center',marginBottom:8,padding:'6px 10px',background:'rgba(255,136,0,0.08)',borderRadius:6}}>
+            ⚠️ {errorMsg}
+          </div>
         )}
         <button
           style={{...styles.btnGreen,width:'100%',padding:12,fontSize:13,opacity:canConfirm?1:0.4}}
