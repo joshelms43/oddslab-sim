@@ -305,7 +305,7 @@ export default function App() {
     // Move to app
     setSelectedBookies(bsPickedBookies)
     setPhase('app')
-    setActiveTab('sportsbet')
+    setActiveTab('oddslab')
     // Init coach after short delay so tabs render
     // Use sportsbet.unlocked as reliable signal that day 1 is done
     const isDay1 = !bookieState.sportsbet.unlocked || day === 1
@@ -336,7 +336,9 @@ export default function App() {
   // ── DEPOSIT ────────────────────────────────────────────
   function openDeposit(key) {
     const b = BOOKIES[key]
-    setDepositModal({ key, amount: b.minDep || 50 })
+    const amount = (key === 'sportsbet' && pendingHedgeDeposit) ? pendingHedgeDeposit : (b.minDep || 50)
+    setDepositModal({ key, amount })
+    if (key === 'sportsbet' && pendingHedgeDeposit) setPendingHedgeDeposit(null)
     coachEvent('signup', key)
   }
 
@@ -467,11 +469,14 @@ export default function App() {
   // Pending hedge deposit amount
   const [pendingHedgeDeposit, setPendingHedgeDeposit] = useState(null)
 
-  // When Sportsbet tab is clicked during hedge flow, open deposit modal
+  // When Sportsbet tab is clicked during hedge flow, show coach step to tap deposit button
   useEffect(() => {
     if (pendingHedgeDeposit && activeTab === 'sportsbet') {
-      setDepositModal({ key: 'sportsbet', amount: pendingHedgeDeposit })
-      setPendingHedgeDeposit(null)
+      coachSet([{
+        title: 'Top up Sportsbet',
+        body: `You need <strong>${fmt(pendingHedgeDeposit)}</strong> in your Sportsbet account to place the safety net bet. Tap <strong>Deposit funds →</strong> below to add it now.`,
+        waitFor: { type: 'signup', key: 'sportsbet' },
+      }])
     }
   }, [activeTab, pendingHedgeDeposit])
 
@@ -535,7 +540,13 @@ export default function App() {
   }
 
   function confirmWD() {
-    const max = day >= 3 ? 2 : 1
+    setScanned([])
+    setCompletedBookies([])
+    setSelectedBookies([])
+    setBetGame(null)
+    setBetStep(0)
+    setBetSlipOpen(false)
+    setPendingHedgeDeposit(null)
     setPhase('bookieSelect')
     setBsPickedBookies([])
   }
@@ -656,6 +667,7 @@ export default function App() {
             betStep={betStep}
             refFn={ref}
             isSportsbet
+            pendingHedgeDeposit={pendingHedgeDeposit}
           />
         )}
         {selectedBookies.map(k => activeTab === k && (
@@ -872,7 +884,7 @@ function Withdrawal({ day, completedBookies, bookieState, onConfirm }) {
 }
 
 // ── BOOKIE PANE ────────────────────────────────────────────
-function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onScan, onOddsClick, betGame, betStep, refFn, scanningKey, scanProgress, scanStatus, isSportsbet }) {
+function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onScan, onOddsClick, betGame, betStep, refFn, scanningKey, scanProgress, scanStatus, isSportsbet, pendingHedgeDeposit }) {
   const sports = ['afl','nrl','nba','mlb']
   const isScanning = scanningKey === bookieKey
   const games = ODDS[bookieKey]?.[sport] || []
@@ -907,7 +919,7 @@ function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onSc
       {!state.unlocked ? (
         <div style={styles.locked}>
           <div style={{fontSize:34,marginBottom:12,opacity:.35}}>{isSportsbet ? '🛡️' : '🎁'}</div>
-          <div style={styles.lockedH}>{isSportsbet ? 'Sportsbet — Safety Net' : `${bk.name} Welcome Offer`}</div>
+          <div style={styles.lockedH}>{isSportsbet ? 'Sportsbet — Your Safety Net' : `${bk.name} Welcome Offer`}</div>
           <div style={styles.lockedP}>{bk.body}</div>
           {!isSportsbet && (
             <button
@@ -919,6 +931,23 @@ function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onSc
               Sign up & claim offer →
             </button>
           )}
+        </div>
+      ) : state.unlocked && pendingHedgeDeposit ? (
+        <div style={styles.locked}>
+          <div style={{fontSize:34,marginBottom:12,opacity:.35}}>🛡️</div>
+          <div style={styles.lockedH}>Top up your Sportsbet account</div>
+          <div style={{...styles.lockedP, maxWidth:300}}>
+            Here's why you need to deposit here: the bonus bet from {bookieKey === 'sportsbet' ? 'your bookie' : 'the other bookie'} can't be withdrawn directly — that's the catch with all bonus bets. You <strong>have to place it as a bet first</strong>.<br/><br/>
+            So we place the bonus bet on one team, then use <strong>your own money here at Sportsbet</strong> to bet on the other team. One of them always wins — and together, you come out ahead.
+          </div>
+          <button
+            id={`signup-sportsbet`}
+            ref={refFn(`signup-sportsbet`)}
+            style={styles.btnSignup}
+            onClick={onSignup}
+          >
+            Deposit {fmt(pendingHedgeDeposit)} →
+          </button>
         </div>
       ) : (
         <>
