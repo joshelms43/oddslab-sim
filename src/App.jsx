@@ -172,7 +172,7 @@ function getDay1Coach(bookieKey) {
     },
     {
       title: 'Have a look at the odds',
-      body: 'These are the games you can bet on. You don\'t need to pick one yourself — OddsLab will find the best one for you. When you\'re ready, tap <strong>Scan screenshot</strong> at the bottom.',
+      body: 'These are the games you can bet on. You don\'t need to pick one yourself — OddsLab will find the best one for you. When you\'re ready, tap <strong>Take Screenshot</strong> at the bottom, then go to the OddsLab tab to scan.',
       waitFor: { type: 'scan', key: bookieKey },
     },
     {
@@ -208,7 +208,7 @@ function getDay2Coach(bookieKey) {
     },
     {
       title: 'Scan the odds board',
-      body: 'Have a look at the games. When you\'re ready, tap <strong>Scan screenshot</strong> at the bottom — OddsLab will find the best game for you automatically.',
+      body: 'Have a look at the games. When you\'re ready, tap <strong>Take Screenshot</strong> at the bottom, then head to OddsLab to scan all your screenshots at once.',
       waitFor: { type: 'scan', key: bookieKey },
     },
     {
@@ -239,6 +239,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('oddslab')
   const [activeSport, setActiveSport] = useState({ tab:'afl', ladbrokes:'afl', neds:'afl', betr:'afl', sportsbet:'afl' })
   const [scanned, setScanned] = useState([])
+  const [screenshots, setScreenshots] = useState({}) // { bookieKey: true } — captured but not yet scanned
   const [sbSelectStep, setSbSelectStep] = useState(false) // true = sportsbet chosen on select screen
   const [bsPickedBookies, setBsPickedBookies] = useState([])
   const [dayWake, setDayWake] = useState(null) // { profit }
@@ -288,7 +289,8 @@ export default function App() {
     if (!wf) { setSpotTarget(null); return }
     const id = wf.type === 'tab' ? `tab-${wf.key}`
               : wf.type === 'signup' ? `signup-${wf.key}`
-              : wf.type === 'scan' ? `scan-${wf.key}`
+              : wf.type === 'scan' && wf.key !== 'all' ? `screenshot-${wf.key}`
+              : wf.type === 'scan' && wf.key === 'all' ? 'scan-all-btn'
               : wf.type === 'gotobets' ? 'ol-list'
               : null
     setSpotTarget(id)
@@ -369,6 +371,17 @@ export default function App() {
     coachEvent('deposited', key)
   }
 
+  // ── SCREENSHOT ─────────────────────────────────────────
+  function takeScreenshot(key) {
+    setScreenshots(s => ({ ...s, [key]: true }))
+    coachEvent('scan', key)
+  }
+
+  function clearScreenshots() {
+    setScreenshots({})
+    setScanned([])
+  }
+
   // ── SCAN ───────────────────────────────────────────────
   function doScan(key) {
     setScanningKey(key)
@@ -380,7 +393,27 @@ export default function App() {
         return [...prev, ...opps.filter(o => !existing.has(o.id))].sort((a,b) => b.profit - a.profit)
       })
       setScanningKey(null)
-      coachEvent('scan', key)
+    }, 2800)
+  }
+
+  function scanAllScreenshots() {
+    const keys = Object.keys(screenshots)
+    if (keys.length === 0) return
+    setScanningKey('all')
+    setTimeout(() => {
+      let allOpps = []
+      keys.forEach(key => {
+        const bk = bookieState[key]
+        if (!bk) return
+        const opps = getAllOpps(key, bk.deposit, bk.bonus)
+        allOpps = [...allOpps, ...opps]
+      })
+      setScanned(prev => {
+        const existing = new Set(prev.map(g => g.id))
+        return [...prev, ...allOpps.filter(o => !existing.has(o.id))].sort((a,b) => b.profit - a.profit)
+      })
+      setScanningKey(null)
+      coachEvent('scan', 'all')
     }, 2800)
   }
 
@@ -413,7 +446,7 @@ export default function App() {
     setStakeInput('')
     const correctStake = step === 0 ? g.depStake : step === 1 ? g.bonusStake : g.hedge
     const stakeBody = step === 1
-      ? `The <strong>Bonus Bet switch</strong> is already on — that's your free money activated. Type <strong>${correctStake.toFixed(2)}</strong> in the stake field (OddsLab calculated this), then tap <strong>Confirm bet →</strong>.`
+      ? `First tap the <strong>Bonus Bet switch</strong> to activate your free money, then type <strong>${correctStake.toFixed(2)}</strong> as the stake. OddsLab calculated that amount. Then tap <strong>Confirm bet →</strong>.`
       : `Type <strong>${correctStake.toFixed(2)}</strong> in the stake field — OddsLab has already worked this out for you. Then tap <strong>Confirm bet →</strong>.`
     coachSet([{
       title: step === 1 ? `Activate your bonus bet` : `Enter the stake amount`,
@@ -557,11 +590,10 @@ export default function App() {
   }
 
   function confirmWD() {
-    // Return the deposits from completed bookies' accounts (profit was already added at bet completion)
-    const depositsToReturn = completedBookies.reduce((sum, k) => sum + (bookieState[k].deposit || 0), 0)
-    // Also return the Sportsbet hedge deposit (minus what was used for the hedge bet, which is already netted in profit)
-    setBankroll(b => b + depositsToReturn)
-    setScanned([])
+    // Return bookie deposits + remaining Sportsbet balance (hedge deposit minus hedge stake already spent)
+    const bookieDeposits = completedBookies.reduce((sum, k) => sum + (bookieState[k].deposit || 0), 0)
+    const sbBalance = bookieState.sportsbet.bal || 0
+    setBankroll(b => b + bookieDeposits + sbBalance)
     setCompletedBookies([])
     setSelectedBookies([])
     setBetGame(null)
@@ -670,7 +702,11 @@ export default function App() {
         {activeTab === 'oddslab' && (
           <OddsLabPanel
             scanned={scanned}
+            screenshots={screenshots}
             onGoBets={startBets}
+            onScanAll={scanAllScreenshots}
+            onClear={clearScreenshots}
+            scanningAll={scanningKey === 'all'}
             refFn={ref}
           />
         )}
@@ -682,13 +718,14 @@ export default function App() {
             sport={activeSport.sportsbet}
             onSportSwitch={sp => setActiveSport(s => ({...s, sportsbet:sp}))}
             onSignup={() => openDeposit('sportsbet')}
-            onScan={null}
+            onScreenshot={null}
             onOddsClick={onOddsClick}
             betGame={betGame}
             betStep={betStep}
             refFn={ref}
             isSportsbet
             pendingHedgeDeposit={pendingHedgeDeposit}
+            hasScreenshot={false}
           />
         )}
         {selectedBookies.map(k => activeTab === k && (
@@ -700,14 +737,12 @@ export default function App() {
             sport={activeSport[k] || 'afl'}
             onSportSwitch={sp => setActiveSport(s => ({...s, [k]:sp}))}
             onSignup={() => openDeposit(k)}
-            onScan={() => doScan(k)}
+            onScreenshot={() => takeScreenshot(k)}
             onOddsClick={onOddsClick}
             betGame={betGame}
             betStep={betStep}
             refFn={ref}
-            scanningKey={scanningKey}
-            scanProgress={scanProgress}
-            scanStatus={scanStatus}
+            hasScreenshot={!!screenshots[k]}
           />
         ))}
       </div>
@@ -754,6 +789,7 @@ export default function App() {
           onStakeChange={setStakeInput}
           onConfirm={confirmBet}
           onClose={() => setBetSlipOpen(false)}
+          bonusBalance={betGame ? bookieState[betGame.srcBookie]?.bonus : 0}
         />
       )}
 
@@ -908,7 +944,7 @@ function Withdrawal({ day, completedBookies, bookieState, onConfirm }) {
 }
 
 // ── BOOKIE PANE ────────────────────────────────────────────
-function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onScan, onOddsClick, betGame, betStep, refFn, scanningKey, scanProgress, scanStatus, isSportsbet, pendingHedgeDeposit }) {
+function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onScreenshot, onOddsClick, betGame, betStep, refFn, isSportsbet, pendingHedgeDeposit, hasScreenshot }) {
   const sports = ['afl','nrl','nba','mlb']
   const isScanning = scanningKey === bookieKey
   const games = ODDS[bookieKey]?.[sport] || []
@@ -1006,23 +1042,21 @@ function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onSc
             ))}
           </div>
 
-          {onScan && (
+          {onScreenshot && (
             <div
-              id={`scan-${bookieKey}`}
-              ref={refFn(`scan-${bookieKey}`)}
+              id={`screenshot-${bookieKey}`}
+              ref={refFn(`screenshot-${bookieKey}`)}
               style={styles.scanStrip}
             >
-              {isScanning ? (
-                <div style={{flex:1}}>
-                  <div style={{height:4,background:'var(--s3)',borderRadius:2,overflow:'hidden',marginBottom:6}}>
-                    <div style={{height:'100%',background:'var(--g)',borderRadius:2,width:`${scanProgress}%`,transition:'width 0.4s'}} />
-                  </div>
-                  <div style={{fontSize:12,color:'var(--t2)',fontFamily:'var(--mono)'}}>{scanStatus}</div>
-                </div>
+              {hasScreenshot ? (
+                <>
+                  <p style={{fontSize:12,color:'var(--g)',fontWeight:600}}>✓ Screenshot captured</p>
+                  <button style={{...styles.btnScan,background:'var(--s2)',color:'var(--t2)',border:'1px solid var(--b2)'}} onClick={onScreenshot}>Retake</button>
+                </>
               ) : (
                 <>
-                  <p style={{fontSize:12,color:'var(--t2)'}}>Ready to find your best opportunity?</p>
-                  <button style={styles.btnScan} onClick={onScan}>📸 Scan screenshot</button>
+                  <p style={{fontSize:12,color:'var(--t2)'}}>Capture the odds board for OddsLab to analyse</p>
+                  <button style={styles.btnScan} onClick={onScreenshot}>📸 Take Screenshot</button>
                 </>
               )}
             </div>
@@ -1034,16 +1068,57 @@ function BookiePane({ bookieKey, bk, state, sport, onSportSwitch, onSignup, onSc
 }
 
 // ── ODDSLAB PANEL ──────────────────────────────────────────
-function OddsLabPanel({ scanned, onGoBets, refFn }) {
+function OddsLabPanel({ scanned, screenshots, onGoBets, onScanAll, onClear, scanningAll, refFn }) {
+  const screenshotCount = Object.keys(screenshots).length
   return (
     <div style={{padding:'16px 18px'}}>
-      <div style={{fontSize:15,fontWeight:700,marginBottom:3}}>Scanned opportunities</div>
-      <div style={{fontSize:12,color:'var(--t2)',marginBottom:14}}>Ranked by guaranteed profit. Hit "Go to bets" to start placing.</div>
+      {screenshotCount > 0 && scanned.length === 0 && (
+        <div style={{background:'var(--gb)',border:'1px solid var(--gbr)',borderRadius:'var(--r)',padding:'14px 16px',marginBottom:16}}>
+          <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>
+            {screenshotCount} screenshot{screenshotCount > 1 ? 's' : ''} ready to scan
+          </div>
+          <div style={{fontSize:12,color:'var(--t2)',marginBottom:12}}>OddsLab will read all of them and find your best opportunity across every bookie.</div>
+          {scanningAll ? (
+            <div style={{fontSize:12,color:'var(--g)',fontFamily:'var(--mono)'}}>Scanning...</div>
+          ) : (
+            <div style={{display:'flex',gap:8}}>
+              <button
+                id="scan-all-btn"
+                ref={refFn('scan-all-btn')}
+                style={{...styles.btnGreen,padding:'9px 16px',fontSize:12,flex:1}}
+                onClick={onScanAll}
+              >
+                📸 Scan {screenshotCount} screenshot{screenshotCount > 1 ? 's' : ''}
+              </button>
+              <button
+                style={{background:'var(--s2)',border:'1px solid var(--b2)',color:'var(--t2)',borderRadius:'var(--r)',padding:'9px 14px',fontSize:12,cursor:'pointer'}}
+                onClick={onClear}
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {scanned.length > 0 && (
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div>
+            <div style={{fontSize:15,fontWeight:700}}>Scanned opportunities</div>
+            <div style={{fontSize:12,color:'var(--t2)'}}>Ranked by guaranteed profit</div>
+          </div>
+          <button
+            style={{background:'var(--s2)',border:'1px solid var(--b2)',color:'var(--t2)',borderRadius:'var(--r)',padding:'6px 12px',fontSize:11,cursor:'pointer'}}
+            onClick={onClear}
+          >
+            Clear all
+          </button>
+        </div>
+      )}
       <div id="ol-list" ref={refFn('ol-list')}>
-        {scanned.length === 0 ? (
+        {scanned.length === 0 && screenshotCount === 0 ? (
           <div style={{textAlign:'center',padding:'44px 20px',color:'var(--t2)'}}>
             <div style={{fontSize:30,marginBottom:9,opacity:.3}}>📸</div>
-            <p style={{fontSize:13,lineHeight:1.6}}>No games yet.<br/>Go to a bookie and hit <strong>Scan screenshot</strong>.</p>
+            <p style={{fontSize:13,lineHeight:1.6}}>No games yet.<br/>Go to a bookie tab, browse the odds, then tap <strong>Take Screenshot</strong>.</p>
           </div>
         ) : scanned.map((g, i) => (
           <div key={g.id} style={{...styles.scCard, ...(i===0?styles.scCardBest:{})}}>
@@ -1067,7 +1142,8 @@ function OddsLabPanel({ scanned, onGoBets, refFn }) {
 }
 
 // ── BET SLIP ───────────────────────────────────────────────
-function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose }) {
+function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose, bonusBalance }) {
+  const [bonusToggled, setBonusToggled] = React.useState(false)
   const tags = [
     `Bet 1 of 3 — ${g.backBookie} (your deposit)`,
     `Bet 2 of 3 — ${g.backBookie} (bonus bet)`,
@@ -1075,7 +1151,7 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose 
   ]
   const subs = [
     `A regular cash bet on ${g.backTeam} using your own deposit money. If ${g.backTeam} wins, you get your stake back plus profit.`,
-    `This time it's your bonus bet — the free money ${g.backBookie} gave you. The toggle below switches it on. If you win, only the profit is paid out (not the bonus stake itself).`,
+    `Now use your bonus bet — the free money ${g.backBookie} gave you. Toggle the switch below to activate it, then enter the stake amount.`,
     `Your safety net bet on ${g.hedgeTeam} at Sportsbet. If ${g.hedgeTeam} wins, this pays out. Either way — you're covered.`,
   ]
   const team = step < 2 ? g.backTeam : g.hedgeTeam
@@ -1083,6 +1159,7 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose 
   const isBonus = step === 1
   const stake = parseFloat(stakeInput) || 0
   const ret = isBonus ? stake * (odds - 1) : stake * odds
+  const canConfirm = stake > 0 && (!isBonus || bonusToggled)
 
   return (
     <div style={styles.slipOv}>
@@ -1100,17 +1177,18 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose 
           ))}
         </div>
 
-        {isBonus && (
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'var(--gb)',border:'1px solid var(--gbr)',borderRadius:'var(--rs)',padding:'10px 13px',marginBottom:11}}>
-            <div>
-              <div style={{fontSize:12,fontWeight:600,marginBottom:1}}>Use Bonus Bet</div>
-              <div style={{fontSize:11,color:'var(--t2)'}}>Free money from {g.backBookie} — tap to activate</div>
-            </div>
-            <div style={{width:42,height:24,background:'var(--g)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'flex-end',padding:'0 3px',cursor:'default'}}>
-              <div style={{width:18,height:18,background:'#0A0D0F',borderRadius:'50%'}} />
-            </div>
+        <div
+          style={{display:'flex',alignItems:'center',justifyContent:'space-between',background: bonusToggled ? 'var(--gb)' : 'var(--s2)',border:`1px solid ${bonusToggled ? 'var(--gbr)' : 'var(--b2)'}`,borderRadius:'var(--rs)',padding:'10px 13px',marginBottom:11,cursor:'pointer',transition:'all .2s'}}
+          onClick={() => isBonus && setBonusToggled(t => !t)}
+        >
+          <div>
+            <div style={{fontSize:12,fontWeight:600,marginBottom:1,color: bonusToggled ? 'var(--g)' : 'var(--t1)'}}>Bonus Bet {bonusToggled ? '✓ Active' : ''}</div>
+            <div style={{fontSize:11,color:'var(--t2)'}}>Balance: <span style={{fontFamily:'var(--mono)',color: bonusToggled ? 'var(--g)' : 'var(--t2)'}}>{fmt(bonusBalance || 0)}</span></div>
           </div>
-        )}
+          <div style={{width:42,height:24,background: bonusToggled ? 'var(--g)' : 'var(--s3)',borderRadius:12,display:'flex',alignItems:'center',justifyContent: bonusToggled ? 'flex-end' : 'flex-start',padding:'0 3px',transition:'all .2s'}}>
+            <div style={{width:18,height:18,background:'#0A0D0F',borderRadius:'50%'}} />
+          </div>
+        </div>
 
         <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:11}}>
           <div style={{fontSize:12,color:'var(--t2)',whiteSpace:'nowrap'}}>Stake ($)</div>
@@ -1127,10 +1205,13 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose 
           <div style={{fontSize:12,color:'var(--t2)'}}>{isBonus ? 'Profit if wins (bonus stake not returned)' : 'Return if wins'}</div>
           <div style={{fontSize:15,fontWeight:700,fontFamily:'var(--mono)',color:'var(--g)'}}>{fmt(ret)}</div>
         </div>
+        {isBonus && !bonusToggled && (
+          <div style={{fontSize:11,color:'var(--t3)',textAlign:'center',marginBottom:8}}>Toggle the Bonus Bet switch above to continue</div>
+        )}
         <button
-          style={{...styles.btnGreen,width:'100%',padding:12,fontSize:13,opacity:stake>0?1:0.4}}
-          onClick={() => { if (stake > 0) onConfirm() }}
-          disabled={stake <= 0}
+          style={{...styles.btnGreen,width:'100%',padding:12,fontSize:13,opacity:canConfirm?1:0.4}}
+          onClick={() => { if (canConfirm) onConfirm() }}
+          disabled={!canConfirm}
         >
           Confirm bet →
         </button>
