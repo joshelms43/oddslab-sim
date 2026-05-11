@@ -138,13 +138,41 @@ function initBookieState() {
 function getDay1Coach(bookieKey) {
   const name = BOOKIES[bookieKey]?.name || ''
   return [
-    { title: 'Go to Sportsbet first', body: 'Click the <strong>Sportsbet tab</strong> — this is your safety net account. Have a look at it before we start.', waitFor: { type: 'tab', key: 'sportsbet' } },
-    { title: `Now go to ${name}`, body: `Click the <strong>${name} tab</strong> to sign up and claim your welcome offer.`, waitFor: { type: 'tab', key: bookieKey } },
-    { title: `Sign up to ${name}`, body: 'Click <strong>Sign up & claim offer</strong> to deposit and get your bonus bet.', waitFor: { type: 'signup', key: bookieKey } },
-    { title: 'Enter your deposit', body: 'The minimum deposit is pre-filled. Click <strong>Deposit & claim</strong> when ready.', waitFor: { type: 'deposited', key: bookieKey } },
-    { title: 'Browse the odds board', body: 'Have a look at the games available. When you\'re ready, hit <strong>Scan screenshot</strong> at the bottom.', waitFor: { type: 'scan', key: bookieKey } },
-    { title: 'Switch to OddsLab', body: 'The odds have been scanned. Click the <strong>OddsLab tab</strong> to see your best opportunity.', waitFor: { type: 'tab', key: 'oddslab' } },
-    { title: 'Hit "Go to bets"', body: 'The best opportunity is at the top with a green border. Hit <strong>Go to bets</strong> to start placing your 3 bets.', waitFor: { type: 'gotobets' } },
+    {
+      title: 'First — meet Sportsbet',
+      body: 'Click the <strong>Sportsbet tab</strong> above. This is a separate account you\'ll use as your "safety net." Every time you place a bonus bet with one bookie, you\'ll place a matching bet here — so one of them always wins.',
+      waitFor: { type: 'tab', key: 'sportsbet' },
+    },
+    {
+      title: `Good. Now let\'s visit ${name}`,
+      body: `Click the <strong>${name} tab</strong>. This is the bookie giving you a bonus bet today. You\'ll deposit a small amount and they\'ll top it up with free money.`,
+      waitFor: { type: 'tab', key: bookieKey },
+    },
+    {
+      title: `Claim your bonus at ${name}`,
+      body: `Click <strong>Sign up & claim offer</strong>. You\'re about to deposit a small amount of your own money — in return, ${name} gives you a bonus bet on top. That bonus bet is where your profit comes from.`,
+      waitFor: { type: 'signup', key: bookieKey },
+    },
+    {
+      title: 'Make your deposit',
+      body: 'The amount is pre-filled — it\'s the minimum needed to unlock the bonus. Click <strong>Deposit & claim →</strong> to confirm. This money stays in your account, it\'s not gone.',
+      waitFor: { type: 'deposited', key: bookieKey },
+    },
+    {
+      title: 'Have a look at the odds',
+      body: 'These are the games you can bet on. You don\'t need to pick one yourself — OddsLab will find the best one for you. When you\'re ready, tap <strong>Scan screenshot</strong> at the bottom.',
+      waitFor: { type: 'scan', key: bookieKey },
+    },
+    {
+      title: 'OddsLab is reading the odds',
+      body: 'The tool is working out which game gives you the highest guaranteed profit. Click the <strong>OddsLab tab</strong> to see the result.',
+      waitFor: { type: 'tab', key: 'oddslab' },
+    },
+    {
+      title: 'Here\'s your best opportunity',
+      body: 'The game with the green border gives you the most profit. OddsLab has already worked out exactly what to bet and where. Tap <strong>Go to bets</strong> to start — you\'ll place 3 bets total.',
+      waitFor: { type: 'gotobets' },
+    },
   ]
 }
 
@@ -242,9 +270,18 @@ export default function App() {
     setSelectedBookies(bsPickedBookies)
     setPhase('app')
     setActiveTab('sportsbet')
-    // Init day 1 coach after short delay so tabs render
+    // Init coach after short delay so tabs render
     setTimeout(() => {
-      coachSet(getDay1Coach(bsPickedBookies[0]))
+      if (day === 1) {
+        coachSet(getDay1Coach(bsPickedBookies[0]))
+      } else {
+        const name = BOOKIES[bsPickedBookies[0]]?.name || ''
+        coachSet([{
+          title: `Day ${day} — same process, new bookie`,
+          body: `You know how this works now. Click the <strong>${name} tab</strong> to sign up and claim their bonus. Then scan, then place your 3 bets — just like before.`,
+          waitFor: { type: 'tab', key: bsPickedBookies[0] },
+        }])
+      }
     }, 100)
   }
 
@@ -311,8 +348,8 @@ export default function App() {
     switchTab(game.srcBookie)
     // Coach: find the odds
     coachSet([{
-      title: `Bet 1 of 3 — ${game.backBookie}`,
-      body: `Find <strong>${game.backTeam}</strong> at odds <strong>${game.backOdds.toFixed(2)}</strong> on the odds board and click it.`,
+      title: `Bet 1 of 3 — Your bonus bet`,
+      body: `Find <strong>${game.backTeam}</strong> (odds <strong>${game.backOdds.toFixed(2)}</strong>) on the board and tap it. This is your <em>bonus bet</em> — it costs you nothing extra, it\'s the free money ${game.backBookie} gave you.`,
       waitFor: { type: 'oddsclick', team: game.backTeam },
     }])
   }
@@ -328,8 +365,8 @@ export default function App() {
     setStakeInput('')
     const correctStake = step === 0 ? g.bonusStake : step === 1 ? g.depStake : g.hedge
     coachSet([{
-      title: `Enter your stake`,
-      body: `Type <strong>${correctStake.toFixed(2)}</strong> in the stake field, then hit <strong>Confirm bet</strong>.`,
+      title: `Enter the stake amount`,
+      body: `Type <strong>${correctStake.toFixed(2)}</strong> in the stake field — OddsLab has already worked this out for you. Then tap <strong>Confirm bet →</strong>.`,
       waitFor: null,
     }])
   }
@@ -346,8 +383,8 @@ export default function App() {
         // Hedge bet — need to deposit into Sportsbet first
         const hedgeAmt = g.hedge
         coachSet([{
-          title: 'Deposit into Sportsbet first',
-          body: `Before the hedge bet you need to deposit <strong>${fmt(hedgeAmt)}</strong> into Sportsbet. Click the <strong>Sportsbet tab</strong>.`,
+          title: 'Almost there — one more step',
+          body: `Bet 1 is placed. Now you need to top up your Sportsbet account with <strong>${fmt(hedgeAmt)}</strong> so you can place the safety net bet. Click the <strong>Sportsbet tab</strong>.`,
           waitFor: { type: 'tab', key: 'sportsbet' },
         }])
         // After tab switch, open deposit modal
@@ -364,8 +401,8 @@ export default function App() {
       } else {
         // Bet 2: deposit bet, stay on bookie
         coachSet([{
-          title: `Bet 2 of 3 — ${g.backBookie}`,
-          body: `Now find <strong>${g.backTeam}</strong> at odds <strong>${g.backOdds.toFixed(2)}</strong> again and click it for your deposit bet.`,
+          title: `Bet 2 of 3 — Your cash bet`,
+          body: `Find <strong>${g.backTeam}</strong> (odds <strong>${g.backOdds.toFixed(2)}</strong>) again and tap it. This time you\'re betting your own deposit money — this is what you get back if ${g.backTeam} wins.`,
           waitFor: { type: 'oddsclick', team: g.backTeam },
         }])
       }
@@ -388,7 +425,7 @@ export default function App() {
       setProfitFlash({ profit: g.profit, backTeam: g.backTeam, backBookie: g.backBookie, hedgeTeam: g.hedgeTeam })
       coachSet([{
         title: 'All 3 bets placed! 🎉',
-        body: 'Your profit is locked in. No matter who wins, you get paid. Close this screen and keep going.',
+        body: 'Your profit is now <strong>locked in</strong>. It doesn\'t matter which team wins — one of your bets always pays out, and you come out ahead either way. Close this to continue.',
         waitFor: null,
       }])
     }
@@ -412,8 +449,8 @@ export default function App() {
     if (activeTab === 'sportsbet') {
       const g = betGame
       coachSet([{
-        title: 'Bet 3 of 3 — Sportsbet',
-        body: `Find <strong>${g.hedgeTeam}</strong> at odds <strong>${g.hedgeOdds.toFixed(2)}</strong> and click it.`,
+        title: 'Bet 3 of 3 — Your safety net',
+        body: `Find <strong>${g.hedgeTeam}</strong> (odds <strong>${g.hedgeOdds.toFixed(2)}</strong>) and tap it. This is the opposite team — if they win, this bet pays out. Either way, you\'re covered.`,
         waitFor: { type: 'oddsclick', team: g.hedgeTeam },
       }])
     }
@@ -441,8 +478,8 @@ export default function App() {
     if (remaining.length > 0) {
       switchTab(remaining[0])
       coachSet([{
-        title: `Next: ${BOOKIES[remaining[0]].name}`,
-        body: `Click the <strong>${BOOKIES[remaining[0]].name} tab</strong> to sign up and use your next bonus.`,
+        title: `Great work! On to ${BOOKIES[remaining[0]].name}`,
+        body: `You\'ve done this before — same process. Click the <strong>${BOOKIES[remaining[0]].name} tab</strong> to sign up and claim their welcome bonus.`,
         waitFor: { type: 'tab', key: remaining[0] },
       }])
     } else if (day < 3) {
@@ -773,8 +810,8 @@ function Withdrawal({ day, completedBookies, bookieState, onConfirm }) {
       <div style={{...styles.bsInner, maxWidth:440}}>
         <div style={styles.sLogo}>odds<em style={{fontStyle:'normal',color:'var(--g)'}}>lab</em></div>
         <div style={styles.dayPill}>Day {day}</div>
-        <div style={styles.bsH}>Withdraw your profit 🎉</div>
-        <div style={styles.bsP}>Your bets settled overnight. Time to cash out and move on to the next bookie.</div>
+        <div style={styles.bsH}>Time to withdraw your profit 💰</div>
+        <div style={styles.bsP}>Your bets have settled. The profit below is real money sitting in your bookie accounts — you can withdraw it straight to your bank. In this simulator, just tap the button to move on to Day {day + 1}.</div>
         <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
           {completedBookies.map(k => (
             <div key={k} style={styles.wdAcc}>
@@ -1018,8 +1055,12 @@ function DayWake({ day, profit, onContinue }) {
   return (
     <div style={styles.pfOv}>
       <div style={{fontSize:11,fontWeight:600,color:'var(--g)',textTransform:'uppercase',letterSpacing:1,marginBottom:10}}>End of Day {day}</div>
-      <div style={{fontSize:26,fontWeight:800,marginBottom:8}}>{day===1?'Great work on day one!':'Another day done!'}</div>
-      <div style={{fontSize:14,color:'var(--t2)',marginBottom:24,lineHeight:1.6,maxWidth:340,textAlign:'center'}}>Tomorrow you'll withdraw your profit and sign up to another bookie.</div>
+      <div style={{fontSize:26,fontWeight:800,marginBottom:8}}>{day===1?'Day one done — well done!':'Another day, another profit!'}</div>
+      <div style={{fontSize:14,color:'var(--t2)',marginBottom:24,lineHeight:1.6,maxWidth:340,textAlign:'center'}}>
+        {day===1
+          ? "Your profit is sitting in the bookie's app. Tomorrow you'll withdraw it to your bank and sign up to a fresh bookie for another round."
+          : "Same thing — your profit is ready to withdraw. One more bookie to go after this."}
+      </div>
       {profit > 0 && (
         <div style={{...styles.wdTotalBox,marginBottom:24,textAlign:'center',flexDirection:'column',alignItems:'center'}}>
           <div style={{fontSize:11,color:'var(--t2)',marginBottom:3}}>Today's profit</div>
