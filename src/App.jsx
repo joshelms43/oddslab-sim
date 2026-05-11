@@ -124,48 +124,43 @@ function getDay1Coach(bookieKey) {
   const name = BOOKIES[bookieKey]?.name || ''
   return [
     {
-      title: 'First — meet Sportsbet',
-      body: 'Click the <strong>Sportsbet tab</strong> above. This is a separate account you\'ll use as your "safety net." Every time you place a bonus bet with one bookie, you\'ll place a matching bet here — so one of them always wins.',
+      title: 'Step 1 — set up your two accounts',
+      body: 'You need two accounts to do this. First, tap the <strong>Sportsbet tab</strong> to see it. Sportsbet is where you\'ll place a matching bet later — think of it as your backup account.',
       waitFor: { type: 'tab', key: 'sportsbet' },
     },
     {
-      title: `Good. Now let\'s visit ${name}`,
-      body: `Click the <strong>${name} tab</strong>. This is the bookie giving you a bonus bet today. You\'ll deposit a small amount and they\'ll top it up with free money.`,
+      title: `Now let\'s go to ${name}`,
+      body: `Tap the <strong>${name} tab</strong>. ${name} is offering you a free bonus bet just for signing up. That free bet is how you make money — we\'re going to convert it into real cash.`,
       waitFor: { type: 'tab', key: bookieKey },
     },
     {
-      title: `Claim your bonus at ${name}`,
-      body: `Click <strong>Sign up & claim offer</strong>. You\'re about to deposit a small amount of your own money — in return, ${name} gives you a bonus bet on top. That bonus bet is where your profit comes from.`,
+      title: `Sign up and grab the free bet`,
+      body: `Tap <strong>Sign up & claim offer</strong>. You deposit a small amount of your own money, and ${name} hands you a bonus bet on top — that\'s the free money. Your own deposit stays in your account.`,
       waitFor: { type: 'signup', key: bookieKey },
     },
     {
-      title: 'Make your deposit',
-      body: 'The amount is pre-filled — it\'s the minimum needed to unlock the bonus. Click <strong>Deposit & claim →</strong> to confirm. This money stays in your account, it\'s not gone.',
+      title: 'Confirm your deposit',
+      body: 'The amount is already filled in — it\'s the minimum to unlock the bonus. Tap <strong>Deposit & claim →</strong>. Your own money doesn\'t disappear, it sits in your account and comes back to you later.',
       waitFor: { type: 'deposited', key: bookieKey },
     },
     {
-      title: 'Have a look at the odds',
-      body: 'These are the games you can bet on. You don\'t need to pick one yourself — OddsLab will find the best one for you. When you\'re ready, tap <strong>Screenshot all sports</strong> at the bottom, then go to OddsLab to scan.',
+      title: 'These are the games you can bet on',
+      body: 'Each row is a match with two teams. The numbers next to each team are the <strong>odds</strong> — basically how much you get back per dollar if that team wins. You don\'t need to pick one. Tap <strong>Screenshot all sports</strong> below and OddsLab will find the best game for you.',
       waitFor: { type: 'scan', key: bookieKey },
     },
     {
-      title: 'OddsLab is reading the odds',
-      body: 'The tool is working out which game gives you the highest guaranteed profit. Click the <strong>OddsLab tab</strong> to see the result.',
+      title: 'Now switch to OddsLab',
+      body: 'Tap the <strong>OddsLab tab</strong> above. OddsLab has your screenshot and is going to find which game gives you the highest guaranteed profit.',
       waitFor: { type: 'tab', key: 'oddslab' },
     },
     {
-      title: 'Screenshot captured — now scan it',
-      body: 'Click the <strong>OddsLab tab</strong> above to switch over.',
-      waitFor: { type: 'tab', key: 'oddslab' },
-    },
-    {
-      title: 'Tap Scan to analyse the odds',
-      body: 'Tap <strong>Scan screenshots</strong>. OddsLab will read all the odds and find your best opportunity — no maths needed.',
+      title: 'Scan your screenshot',
+      body: 'Tap <strong>Scan screenshots</strong>. OddsLab will read the odds from your screenshot and work out the exact bets you need to place. No maths on your end.',
       waitFor: { type: 'scan', key: 'all' },
     },
     {
-      title: 'Here\'s your best opportunity',
-      body: 'The game with the green border gives you the most profit. OddsLab has already worked out exactly what to bet and where. Tap <strong>Go to bets</strong> to start — you\'ll place 3 bets total.',
+      title: 'This is your best option',
+      body: 'The green-bordered game at the top gives you the most guaranteed profit. OddsLab has already calculated every number. Tap <strong>Go to bets</strong> — you\'ll place 3 bets and then you\'re done.',
       waitFor: { type: 'gotobets' },
     },
   ]
@@ -366,8 +361,8 @@ export default function App() {
     if (betGame && betGame.srcBookie === key && !isSB) {
       setTimeout(() => {
         coachSet([{
-          title: `Bet 1 of 3 — Your deposit bet`,
-          body: `Find <strong>${betGame.backTeam}</strong> (odds <strong>${betGame.backOdds.toFixed(2)}</strong>) on the board and tap it. This is a cash bet using your own deposit money.`,
+          title: `Bet 1 of 3 — Your own money`,
+          body: `Find <strong>${betGame.backTeam}</strong> on the board and tap them. This bet uses your own deposit money — if they win, you get it back with profit.`,
           waitFor: { type: 'oddsclick', team: betGame.backTeam },
         }])
       }, 100)
@@ -459,8 +454,8 @@ export default function App() {
     }
     switchTab(game.srcBookie)
     coachSet([{
-      title: `Bet 1 of 3 — Your deposit bet`,
-      body: `Find <strong>${game.backTeam}</strong> (odds <strong>${game.backOdds.toFixed(2)}</strong>) on the board and tap it. This is a cash bet using your own deposit money — you get this back if ${game.backTeam} wins.`,
+      title: `Bet 1 of 3 — Your own money`,
+      body: `Find <strong>${game.backTeam}</strong> on the board and tap them. The number next to their name (${game.backOdds.toFixed(2)}) means if they win, you get ${game.backOdds.toFixed(2)}x your money back. This bet uses your own deposit — not the free bet.`,
       waitFor: { type: 'oddsclick', team: game.backTeam },
     }])
   }
@@ -476,10 +471,12 @@ export default function App() {
     setStakeInput('')
     const correctStake = step === 0 ? g.depStake : step === 1 ? g.bonusStake : g.hedge
     const stakeBody = step === 1
-      ? `First tap the <strong>Bonus Bet switch</strong> to activate your free money, then type <strong>${correctStake.toFixed(2)}</strong> as the stake. OddsLab calculated that amount. Then tap <strong>Confirm bet →</strong>.`
-      : `Type <strong>${correctStake.toFixed(2)}</strong> in the stake field — OddsLab has already worked this out for you. Then tap <strong>Confirm bet →</strong>.`
+      ? `First, flip the <strong>Bonus Bet switch</strong> — that activates your free money from ${g.backBookie}. Then type <strong>${correctStake.toFixed(2)}</strong> in the stake field. OddsLab calculated that exact amount to maximise your profit. Tap <strong>Confirm bet →</strong>.`
+      : step === 2
+      ? `Type <strong>${correctStake.toFixed(2)}</strong> in the stake field. OddsLab worked out this exact amount — it\'s the other side of the equation that guarantees your profit. Tap <strong>Confirm bet →</strong>.`
+      : `Type <strong>${correctStake.toFixed(2)}</strong> in the stake field — this is your cash bet. OddsLab calculated the exact amount. Tap <strong>Confirm bet →</strong>.`
     coachSet([{
-      title: step === 1 ? `Activate your bonus bet` : `Enter the stake amount`,
+      title: step === 1 ? `Use your free bet` : step === 2 ? `Final bet — lock in the profit` : `Enter your stake`,
       body: stakeBody,
       waitFor: null,
     }])
@@ -497,8 +494,8 @@ export default function App() {
         // Hedge bet — need to deposit into Sportsbet first
         const hedgeAmt = g.hedge
         coachSet([{
-          title: 'Almost there — one more step',
-          body: `Both bets at ${g.backBookie} are placed. Now top up your Sportsbet account with <strong>${fmt(hedgeAmt)}</strong> so you can place the safety net bet. Click the <strong>Sportsbet tab</strong>.`,
+          title: `Almost there — one bet to go`,
+          body: `You\'ve placed your two ${g.backBookie} bets. Now you need to bet on the <strong>other team</strong> at Sportsbet — so if ${g.backTeam} loses, you still win. Tap the <strong>Sportsbet tab</strong> to top up and place the final bet.`,
           waitFor: { type: 'tab', key: 'sportsbet' },
         }])
         // After tab switch, open deposit modal
@@ -515,8 +512,8 @@ export default function App() {
       } else {
         // Bet 2: bonus bet, stay on bookie
         coachSet([{
-          title: `Bet 2 of 3 — Your bonus bet`,
-          body: `Find <strong>${g.backTeam}</strong> (odds <strong>${g.backOdds.toFixed(2)}</strong>) again — but this time flip the <strong>Bonus Bet switch</strong> on the bet slip. This uses the free money the bookie gave you, not your own cash.`,
+          title: `Bet 2 of 3 — The free money`,
+          body: `Find <strong>${g.backTeam}</strong> again and tap them. This time you\'re using your <strong>bonus bet</strong> — the free money ${g.backBookie} gave you. Flip the Bonus Bet switch when the slip opens. If this wins, you keep the profit (not the bonus stake itself, that\'s the catch with bonus bets).`,
           waitFor: { type: 'oddsclick', team: g.backTeam },
         }])
       }
@@ -571,8 +568,8 @@ export default function App() {
   useEffect(() => {
     if (pendingHedgeDeposit && activeTab === 'sportsbet') {
       coachSet([{
-        title: 'Top up Sportsbet',
-        body: `You need <strong>${fmt(pendingHedgeDeposit)}</strong> in your Sportsbet account to place the safety net bet. Tap <strong>Deposit funds →</strong> below to add it now.`,
+        title: 'Add funds to Sportsbet',
+        body: `You need <strong>${fmt(pendingHedgeDeposit)}</strong> in your Sportsbet account for the final bet. This money comes back to you — it\'s just covering the last bet. Tap <strong>Deposit ${fmt(pendingHedgeDeposit)} →</strong> below.`,
         waitFor: { type: 'signup', key: 'sportsbet' },
       }])
     }
@@ -585,8 +582,8 @@ export default function App() {
     if (activeTab === 'sportsbet') {
       const g = betGame
       coachSet([{
-        title: 'Bet 3 of 3 — Your safety net',
-        body: `Find <strong>${g.hedgeTeam}</strong> (odds <strong>${g.hedgeOdds.toFixed(2)}</strong>) and tap it. This is the opposite team — if they win, this bet pays out. Either way, you\'re covered.`,
+        title: `Bet 3 of 3 — The other team`,
+        body: `Find <strong>${g.hedgeTeam}</strong> and tap them. This is the opposite team to your bonus bet. If <strong>${g.hedgeTeam}</strong> wins, this pays out. If <strong>${g.backTeam}</strong> wins, your bonus bet pays out. Either way — one of your bets always wins. That\'s how the profit is guaranteed.`,
         waitFor: { type: 'oddsclick', team: g.hedgeTeam },
       }])
     }
@@ -850,7 +847,7 @@ export default function App() {
         step={currentCoachStep}
         idx={coach.idx}
         total={coach.steps.length}
-        hidden={coach.hidden || betSlipOpen}
+        hidden={coach.hidden || betSlipOpen || !!profitFlash}
         onHide={() => setCoach(c => ({...c, hidden:true}))}
         onShow={() => setCoach(c => ({...c, hidden:false}))}
         onManualNext={() => setCoach(c => ({...c, idx: Math.min(c.idx+1, c.steps.length-1)}))}
@@ -1153,8 +1150,8 @@ function OddsLabPanel({ scanned, screenshots, onGoBets, onScanAll, onClear, scan
       {scanned.length > 0 && (
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
           <div>
-            <div style={{fontSize:15,fontWeight:700}}>Scanned opportunities</div>
-            <div style={{fontSize:12,color:'var(--t2)'}}>Ranked by guaranteed profit</div>
+            <div style={{fontSize:15,fontWeight:700}}>Best opportunities found</div>
+            <div style={{fontSize:12,color:'var(--t2)'}}>The profit shown is <strong>guaranteed</strong> regardless of who wins</div>
           </div>
           <button
             style={{background:'var(--s2)',border:'1px solid var(--b2)',color:'var(--t2)',borderRadius:'var(--r)',padding:'6px 12px',fontSize:11,cursor:'pointer'}}
@@ -1200,9 +1197,9 @@ function BetSlip({ game: g, step, stakeInput, onStakeChange, onConfirm, onClose,
     `Bet 3 of 3 — Sportsbet (safety net)`,
   ]
   const subs = [
-    `A regular cash bet on ${g.backTeam} using your own deposit money. If ${g.backTeam} wins, you get your stake back plus profit.`,
-    `Now use your bonus bet — the free money ${g.backBookie} gave you. Toggle the switch below to activate it, then enter the stake amount.`,
-    `Your safety net bet on ${g.hedgeTeam} at Sportsbet. If ${g.hedgeTeam} wins, this pays out. Either way — you're covered.`,
+    `This is your own money. You're betting on ${g.backTeam} at ${g.backBookie}. If ${g.backTeam} wins, you get your stake back plus profit. If they lose, your bonus bet (next step) covers you.`,
+    `This is the free bonus bet ${g.backBookie} gave you — not your own money. Flip the Bonus Bet switch below first. If ${g.backTeam} wins, you pocket the profit. If they lose, your Sportsbet bet (next step) covers you.`,
+    `This is the final piece. You're betting on ${g.hedgeTeam} — the opposite team — at Sportsbet. If ${g.hedgeTeam} wins, this pays out. If ${g.backTeam} wins, your earlier bets pay out. One side always wins. Profit is locked in.`,
   ]
   const team = step < 2 ? g.backTeam : g.hedgeTeam
   const odds = step < 2 ? g.backOdds : g.hedgeOdds
