@@ -176,6 +176,42 @@ function getDay1Coach(bookieKey) {
   ]
 }
 
+function getDay2Coach(bookieKey) {
+  const name = BOOKIES[bookieKey]?.name || ''
+  return [
+    {
+      title: `Day 2 — welcome back`,
+      body: `Same idea as yesterday, new bookie. Sportsbet is still your safety net — it stays open in the background. Click the <strong>${name} tab</strong> to get started.`,
+      waitFor: { type: 'tab', key: bookieKey },
+    },
+    {
+      title: `Sign up to ${name}`,
+      body: `Click <strong>Sign up & claim offer</strong>. Just like yesterday — deposit a small amount and ${name} gives you a bonus bet on top.`,
+      waitFor: { type: 'signup', key: bookieKey },
+    },
+    {
+      title: 'Confirm your deposit',
+      body: 'The minimum deposit is pre-filled. Click <strong>Deposit & claim →</strong>. Your bonus bet will appear in your balance straight away.',
+      waitFor: { type: 'deposited', key: bookieKey },
+    },
+    {
+      title: 'Scan the odds board',
+      body: 'Have a look at the games. When you\'re ready, tap <strong>Scan screenshot</strong> at the bottom — OddsLab will find the best game for you automatically.',
+      waitFor: { type: 'scan', key: bookieKey },
+    },
+    {
+      title: 'Check your opportunity',
+      body: 'Click the <strong>OddsLab tab</strong> to see which game OddsLab picked and how much profit is locked in.',
+      waitFor: { type: 'tab', key: 'oddslab' },
+    },
+    {
+      title: 'Place your 3 bets',
+      body: 'Tap <strong>Go to bets</strong> on the top result. OddsLab will walk you through each bet one at a time — bonus bet, deposit bet, then the Sportsbet safety net.',
+      waitFor: { type: 'gotobets' },
+    },
+  ]
+}
+
 // ── MAIN APP ───────────────────────────────────────────────
 export default function App() {
   // Phase: 'onboarding' | 'bookieSelect' | 'app' | 'withdrawal' | 'end'
@@ -271,16 +307,13 @@ export default function App() {
     setPhase('app')
     setActiveTab('sportsbet')
     // Init coach after short delay so tabs render
+    // Use sportsbet.unlocked as reliable signal that day 1 is done
+    const isDay1 = !bookieState.sportsbet.unlocked || day === 1
     setTimeout(() => {
-      if (day === 1) {
+      if (isDay1) {
         coachSet(getDay1Coach(bsPickedBookies[0]))
       } else {
-        const name = BOOKIES[bsPickedBookies[0]]?.name || ''
-        coachSet([{
-          title: `Day ${day} — same process, new bookie`,
-          body: `You know how this works now. Click the <strong>${name} tab</strong> to sign up and claim their bonus. Then scan, then place your 3 bets — just like before.`,
-          waitFor: { type: 'tab', key: bsPickedBookies[0] },
-        }])
+        coachSet(getDay2Coach(bsPickedBookies[0]))
       }
     }, 100)
   }
@@ -1100,13 +1133,18 @@ function EndScreen({ totalProfit, completedBookies, bookieState }) {
 
 // ── COACH ──────────────────────────────────────────────────
 function Coach({ step, idx, total, hidden, onHide, onShow, onManualNext }) {
+  const atBottom = !step?.waitFor || step.waitFor.type !== 'scan'
+  const wrapStyle = atBottom
+    ? styles.coachWrap
+    : { ...styles.coachWrap, bottom: 'unset', top: 18 }
+
   if (!step) return (
-    <div style={styles.coachWrap}>
+    <div style={wrapStyle}>
       <button style={styles.coachBtn} onClick={onShow}>💡</button>
     </div>
   )
   return (
-    <div style={styles.coachWrap}>
+    <div style={wrapStyle}>
       {!hidden && (
         <div style={styles.coachPopup}>
           <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:7}}>
@@ -1154,11 +1192,10 @@ function Spotlight({ targetId }) {
         width: rect.width, height: rect.height,
         borderRadius:9,
         pointerEvents:'none',
-        boxShadow:'0 0 0 9999px rgba(0,0,0,0.55)',
         border:'2px solid var(--g)',
         animation:'spotPulse 1.6s infinite',
       }} />
-      <style>{`@keyframes spotPulse{0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,0.55),0 0 0 0 rgba(0,230,118,0.5)}55%{box-shadow:0 0 0 9999px rgba(0,0,0,0.55),0 0 0 7px rgba(0,230,118,0)}}`}</style>
+      <style>{`@keyframes spotPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,0.6),0 0 12px 2px rgba(0,230,118,0.25)}55%{box-shadow:0 0 0 6px rgba(0,230,118,0),0 0 18px 4px rgba(0,230,118,0.1)}}`}</style>
     </div>
   )
 }
